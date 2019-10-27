@@ -1,0 +1,10 @@
+#mac os
+.DS_Store
+._.DS_Store
+
+#backup file
+*.bak
+
+#c
+build/*.o
+fileserver
