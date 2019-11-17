@@ -1,6 +1,7 @@
 #mac os
 .DS_Store
 ._.DS_Store
+.vscode
 
 #backup file
 *.bak
@@ -8,3 +9,4 @@
 #c
 build/*.o
 fileserver
+src/test*
