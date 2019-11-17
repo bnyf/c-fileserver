@@ -2,8 +2,8 @@
 // Created by zhoujie on 2019/11/17.
 //
 
-#ifndef URL_TEST_URL_PARSER_H
-#define URL_TEST_URL_PARSER_H
+#ifndef URL_PARSER_H
+#define URL_PARSER_H
 
 /**
  * Dependencies
@@ -113,4 +113,4 @@ void url_inspect(char *url);
 
 void url_data_inspect(url_data_t *data);
 
-#endif //URL_TEST_URL_PARSER_H
+#endif //URL_PARSER_H
