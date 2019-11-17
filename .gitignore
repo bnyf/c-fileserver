@@ -1,13 +1,14 @@
 #mac os
 .DS_Store
 ._.DS_Store
-
+.vscode
 
 #backup file
 *.bak
 
 #c
 build/*.o
+src/test*
 fileserver
 
 # vscode ================================
@@ -119,3 +120,4 @@ fabric.properties
 
 # Android studio 3.1+ serialized cache file
 .idea/caches/build_file_checksums.ser
+

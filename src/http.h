@@ -2,11 +2,18 @@
 #define __HTTP_H__
 
 #include "tools.h"
+#include "url_parser.h"
 
 #define LF '\n'
 #define CR '\r'
 #define CRLF "\r\n\0"
 #define __SPLIT_HEADANDBODY__ "\r\n\r\n\0"
+#define __LINEMAXNUM__ 20
+
+//定义状态码
+#define __NORMAL__ 200
+#define __REQUEST_ERROR__ 400
+#define __INTERNAL_SERVER_ERROR__ 500
 
 /**
  * http 协议的基本数据结构
@@ -140,7 +147,7 @@ typedef struct
 //-----------------------------------------------------------------------------------
 
 /*将字符流转化为标准http报文*/
-request_message pre_Process(char *message);
+request_message pre_Process(char *message,int* error);
 
 /*生成响应报文*/
 response_message gen_Message();

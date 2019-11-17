@@ -4,17 +4,19 @@
 #include <ctype.h>
 #include "tools.h"
 #include "http.h"
-#define __LINEMAXNUM__ 20
+
+
 /**
  * name: pre_Process
  * desc: 将字符流转化为标准http报文
  * para:
  *     @message     客户端发送的报文字符流
+ *     @error       状态码
  * return: 请求报文
  * 
  * !!!!!该函数中未实现错误处理部分
 */
-request_message pre_Process(char *message)
+request_message pre_Process(char *message,int * error)
 {
     request_message req;
     /*
@@ -26,6 +28,12 @@ request_message pre_Process(char *message)
     int lineNum = 0;
     char *head_body[2] = {0};
     lineNum = split_str(message, __SPLIT_HEADANDBODY__, head_body); // 调用分割函数
+    /*当请求项错误的时候，直接退出，并置状态码*/
+    if(lineNum==0)
+    {
+        *error=__REQUEST_ERROR__;
+        return req;
+    }
     //添加实体
     if(lineNum==1)
         req.body=NULL;
@@ -36,6 +44,12 @@ request_message pre_Process(char *message)
     //生成请求行
     char *req_line[3] = {0};
     int rl_num = split(line[0], " ", req_line);
+    /*当请求项错误的时候，直接退出，并置状态码*/
+    if(rl_num!=3)
+    {
+        *error=__REQUEST_ERROR__;
+        return req;
+    }
     req.rl= (request_line *)malloc(sizeof(request_line));// 为请求行分配空间
     req.rl->method = (char *)malloc(sizeof(char) * strlen(req_line[0]));
     strcpy(req.rl->method,req_line[0]);
@@ -50,7 +64,12 @@ request_message pre_Process(char *message)
     {
         char *rh_head[2]={0};
         int rh_head_num=split(line[i], ":", rh_head);
-        /*此处应添加错误处理部分*/
+        /*当请求项错误的时候，直接退出，并置状态码*/
+        if(rh_head_num!=2)
+        {
+            *error=__REQUEST_ERROR__;
+            return req;
+        }
         if(!strcmp(rh_head[0],"Accept-Language"))
         {
             //多行同一类型请求，默认保存最后一次
@@ -59,6 +78,8 @@ request_message pre_Process(char *message)
         }
         /*添加其他的首部字段*/
     }
+    /*正常执行,置状态码为200*/
+    *error=__NORMAL__;
     return req;
 }
 
@@ -101,6 +122,14 @@ int execReq(request_message * req)
 */
 int do_get(request_message *req)
 {
+    //解析URL
+    url_data_t *url_info = NULL;
+    url_info = url_parse(req->rl->url);
+    //url_data_inspect(url_info);
+    char *filepath=url_info->pathname;
+    printf("filepath:%s\n",filepath);
+    /*将文件解析地址传入处理函数,需要配合响应函数写*/
+    
     return 0;
 }
 
