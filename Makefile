@@ -1,6 +1,7 @@
 # c version: gnu11 
 
 SRC_DIR := ./src
+INCLUDE_DIR := ./include
 BUILD_DIR := ./build
 CC := gcc
 

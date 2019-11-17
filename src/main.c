@@ -1,8 +1,17 @@
 #include <stdio.h>
-#include<stdlib.h>
-#include"http.h"
-int main(int argc, char* argv[]){
+#include <stdlib.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <arpa/inet.h> //inet_addr()
+#include <unistd.h>
 
+#include "http.h"
+#include "server.h"
+
+int main(int argc, char* argv[]) {
+
+	start_serv();
+		
 	request_message r;
 	int error;
 	//测试部分 
