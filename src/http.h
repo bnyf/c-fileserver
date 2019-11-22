@@ -49,6 +49,7 @@ typedef struct
     char *host;                 //请求资源所在服务器
     char *accept;               //用户可处理的媒体类型
     char *accept_language;      //优先的自然语言
+    char *content_length;       //标识post报文主体长度
     // char *accept_encoding;      //优先的内容编码
     // char *accept_charset;       //优先的字符集
     // char *authorization;        //web认证信息
@@ -145,6 +146,8 @@ typedef struct
 } response_message;
 
 //-----------------------------------------------------------------------------------
+/*从tcp读取http流*/
+request_message read_http(int fd,int statue_code);
 
 /*将字符流转化为标准http报文*/
 request_message pre_Process(char *message,int* error);

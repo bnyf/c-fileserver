@@ -10,7 +10,7 @@
 
 int main(int argc, char* argv[]) {
 
-	start_serv();
+	//start_serv();
 		
 	request_message r;
 	int error;

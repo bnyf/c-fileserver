@@ -13,8 +13,6 @@
  *     @message     客户端发送的报文字符流
  *     @error       状态码
  * return: 请求报文
- * 
- * !!!!!该函数中未实现错误处理部分
 */
 request_message pre_Process(char *message,int * error)
 {
@@ -84,7 +82,7 @@ request_message pre_Process(char *message,int * error)
 }
 
 /**
- * name: pre_Process
+ * name: gen_Message
  * desc: 生成响应报文
  * para:    @参数待定
  * return: 响应报文
@@ -103,7 +101,6 @@ response_message gen_Message()
 */
 int execReq(request_message * req)
 {
-
     if(!strcmp(req->rl->method,"GET"))
         return do_get(req);
     else if(!strcmp(req->rl->method,"POST"))
@@ -141,9 +138,10 @@ int do_get(request_message *req)
 */
 int do_post(request_message *req)
 {
-    printf("%s\n",req->body);
-	printf("%s\n",req->rl->version);
-	printf("%s\n",req->rh->accept_language);
-    printf("test_post\n");
+    //如果是POST方法，读取Content-Length字段
+
+    //如果读取不到，发送请求错误报文；如果读取正常，发送200的响应报文
+
+    //正常响应设置管道，进行数据流传送
     return 0;
 }
