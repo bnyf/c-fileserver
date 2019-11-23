@@ -347,52 +347,53 @@ void doChunkedFileDownLoadResponse(char* filePath,int32_t socketNum){
 }
 
 
-//void doChunkedFileUpLoadResponseWithParseBody(char* filePath,int32_t socketNum){
-//
-//    uint32_t size = 0;
-//    FILE* file = fopen(filePath,"wb");
-//    if(file == 0){
-//
-//        char* res = onFileNotFound();
-//        send(socketNum,res,strlen(res),0);
-//        free(res);
-//        return;
-//    }
-//    char temp[size+1];
-//    while(1){
-//
-//        fscanf(socketNum,"%x\r\n",&size);
-//        if(size == 0){
-//
-//            break;
-//        }
-//
-//        uint32_t length = fread(temp, sizeof(char),size,socketNum);
-//        fgetc(socketNum);
-//        fgetc(socketNum);
-//
-//        fwrite(temp, sizeof(char),length,file);
-//        if(ferror(file)){
-//
-//            char* res = onInternalServerError();
-//            send(socketNum,res,strlen(res),0);
-//            free(res);
-//            fclose(file);
-//            return;
-//
-//        }
-//
-//
-//    }
-//
-//    ResponseStatusLine* responseStatusLine = new_ResponseStatusLine(HTTP_VERSION1_1,OK_CODE);
-//    char* res = generateStatusLineStr(responseStatusLine);
-//    send(socketNum,res,strlen(res),0);
-//    free(res);
-//    free_ResponseStatusLine(responseStatusLine);
-//    fclose(file);
-//
-//}
+void doChunkedFileUpLoadResponseWithParseBody(char* filePath,int32_t socketNum){
+
+    uint32_t size = 0;
+    FILE* file = fopen(filePath,"wb");
+    if(file == 0){
+
+        char* res = onFileNotFound();
+        send(socketNum,res,strlen(res),0);
+        free(res);
+        return;
+    }
+    char temp[size+1];
+    FILE* socketFile = fdopen(socketNum,"rb");
+    while(1){
+
+        fscanf(socketFile,"%x\r\n",&size);
+        if(size == 0){
+
+            break;
+        }
+
+        uint32_t length = fread(temp, sizeof(char),size,socketFile);
+        fgetc(socketFile);
+        fgetc(socketFile);
+
+        fwrite(temp, sizeof(char),length,file);
+        if(ferror(file)){
+
+            char* res = onInternalServerError();
+            send(socketNum,res,strlen(res),0);
+            free(res);
+            fclose(file);
+            return;
+
+        }
+
+
+    }
+
+    ResponseStatusLine* responseStatusLine = new_ResponseStatusLine(HTTP_VERSION1_1,OK_CODE);
+    char* res = generateStatusLineStr(responseStatusLine);
+    send(socketNum,res,strlen(res),0);
+    free(res);
+    free_ResponseStatusLine(responseStatusLine);
+    fclose(file);
+
+}
 
 int32_t doFileUpLoad(char* filePath,char* content){
 
