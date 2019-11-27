@@ -3,6 +3,9 @@
 //
 
 #include "FilePresenter.h"
+#include <stdlib.h>
+#include <stdio.h>
+
 void downLoadFileResponseDemo(){
 
     char* path = "/home/ubuntu/test.txt";
@@ -22,7 +25,7 @@ void uploadFileResponseDemo(){
 
     char* res = generateFullFileUpLoadResponseWithParseBody(path,content,boundary);
 
-    printf("%s",res) // or send to socket
+    printf("%s",res); // or send to socket
 
     free(res);
 

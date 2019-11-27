@@ -4,7 +4,6 @@ project(c_fileserver)
 set(CMAKE_CXX_STANDARD 14)
 
 include_directories(src)
-include_directories(src/fileManager)
 
 add_executable(c_fileserver
         src/http.c
@@ -18,5 +17,9 @@ add_executable(c_fileserver
         src/tools.h
         src/url_parser.c
         src/url_parser.h
-        README.md src/response_demo.c FilePresenter.c FilePresenter.h response.h response.c
+        src/response_demo.c
+        src/FilePresenter.c
+        src/FilePresenter.h
+        src/response.h
+        src/response.c
         )

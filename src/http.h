@@ -9,12 +9,13 @@
 #define CRLF "\r\n\0"
 #define __SPLIT_HEADANDBODY__ "\r\n\r\n\0"
 #define __LINEMAXNUM__ 20
-
+#define __ERROR__ 0
+#define __OK__ 1
 //定义状态码
 #define __NORMAL__ 200
 #define __REQUEST_ERROR__ 400
 #define __INTERNAL_SERVER_ERROR__ 500
-
+#define __MAXLENGTH__ 4096
 /**
  * http 协议的基本数据结构
 */
@@ -147,21 +148,21 @@ typedef struct
 
 //-----------------------------------------------------------------------------------
 /*从tcp读取http流*/
-request_message read_http(int fd,int statue_code);
+uint32_t read_http(int fd,int *statue_code);
 
 /*将字符流转化为标准http报文*/
 request_message pre_Process(char *message,int* error);
 
 /*生成响应报文*/
-response_message gen_Message();
+uint32_t send_Message(int fd,int statue_code, char *res);
 
 /*根据请求报文转入相应处理函数执行*/
-int execReq(request_message *req);
+uint32_t execReq(request_message *req,int fd,int *statue_code);
 
 /*执行GET方法处理请求*/
-int do_get(request_message *req);
+uint32_t do_get(request_message *req,int fd,int *statue_code);
 
 /*执行POST方法处理请求*/
-int do_post(request_message *req);
+uint32_t do_post(request_message *req,int fd,int *statue_code);
 
 #endif
