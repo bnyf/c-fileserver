@@ -18,5 +18,10 @@ add_executable(c_fileserver
         src/tools.h
         src/url_parser.c
         src/url_parser.h
-        README.md src/response_demo.c FilePresenter.c FilePresenter.h response.h response.c
+#        src/response_demo.c
+        src/FilePresenter.h
+        src/FilePresenter.c
+        src/response.h
+        src/response.c
+        README.md
         )
