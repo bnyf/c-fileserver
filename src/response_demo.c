@@ -22,7 +22,7 @@ void uploadFileResponseDemo(){
 
     char* res = generateFullFileUpLoadResponseWithParseBody(path,content,boundary);
 
-    printf("%s",res) // or send to socket
+    printf("%s",res); // or send to socket
 
     free(res);
 
