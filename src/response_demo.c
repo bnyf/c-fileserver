@@ -3,6 +3,9 @@
 //
 
 #include "FilePresenter.h"
+#include <stdlib.h>
+#include <stdio.h>
+
 void downLoadFileResponseDemo(){
 
     char* path = "/home/ubuntu/test.txt";
