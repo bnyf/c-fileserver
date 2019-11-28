@@ -7,6 +7,6 @@
 #include <unistd.h>
 #include <rio.h>
 
-int start_serv();
+int create_server();
 
 #endif

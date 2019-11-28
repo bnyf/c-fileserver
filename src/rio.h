@@ -4,6 +4,10 @@
 
 #include <string.h>
 #include <sys/socket.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/errno.h>
+#include <stdio.h>
 
 #define RIO_BUFSIZE 4096
 
@@ -13,18 +17,18 @@ typedef struct _Rio{
     char *rioBufptr;   //当前下一个未读取字符的地址
     char rioBuf[RIO_BUFSIZE];
 
-    ssize_t (*readn)(Rio *rp, void *usrbuf, size_t n);
-    ssize_t (*readline)(Rio *rp, void *usrbuf, size_t maxlen);
-    ssize_t (*writen)(int fd, void *usrbuf, size_t n);
-}Rio; 
+    ssize_t (*readn)(struct _Rio *rp, void *usrbuf, size_t n);
+    ssize_t (*readline)(struct _Rio *rp, void *usrbuf, size_t maxlen);
+    ssize_t (*writen)(struct _Rio *rp, void *usrbuf, size_t n);
+} Rio;
 
 Rio* newRio(int fd);
-static ssize_t Rio_read(Rio *rp, char *usrbuf, size_t n);
-
+void freeRio(Rio *rp);
 
 #endif
 
 /*
     Rio * rio = newRio(fd);
-    rio -> readn(rio, userbuf, n);
+    int n =rio -> readn(rio, userbuf, n);
+    free(rio);
 */

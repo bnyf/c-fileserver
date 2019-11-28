@@ -1,16 +1,8 @@
 #include "server.h"
 
-void pre_Process(int socket_desc) {
-	printf("do_http\n");
-	close(socket_desc);
-}
-
-
-int start_serv() {
-	int socket_desc, new_socket = 0;
-	struct sockaddr_in server, client;
-	char *message, reply[2000];
-	socklen_t new_socket_len;
+int create_server() {
+	int socket_desc;
+	struct sockaddr_in server;
 
 	// create socket
 	if( (socket_desc = socket(AF_INET, SOCK_STREAM, 0)) == -1) { //IPv4, TCP, IP
@@ -34,16 +26,5 @@ int start_serv() {
 	listen(socket_desc, 3);
 	printf("wait for connections...\n");
 
-	//accept and send data
-	while( (new_socket = accept(socket_desc, (struct sockaddr*)&client, (socklen_t*)(&new_socket_len) )) ) {
-		pre_Process(new_socket);
-	}
-	if(new_socket == 0){
-		printf("accept error.\n");
-		return 1;
-	}
-	
-	close(socket_desc);
-
-	return 0;
+	return socket_desc;
 }
