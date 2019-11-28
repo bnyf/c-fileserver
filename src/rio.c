@@ -15,9 +15,9 @@ static ssize_t Rio_read(Rio *rp, char *usrbuf, size_t n) {
     size_t copyCnt;
 
     while(rp->rioCnt <= 0) {
-        printf("begin read: %d\n",rp ->rioCnt);
+//        printf("begin read: %d\n",rp ->rioCnt);
         readCnt = read(rp->rioFd, rp->rioBuf, sizeof(rp->rioBuf));
-        printf("end read: %d\n",readCnt);
+//        printf("end read: %d\n",readCnt);
         if(readCnt < 0) {
             if(errno != EINTR)
                 return -1;
@@ -63,7 +63,7 @@ ssize_t Rio_readn(Rio *rp, void *usrbuf, size_t n) {
             break;
         }
         else{
-            printf("readn: %d\n",readCnt);
+//            printf("readn: %d\n",readCnt);
             leftCnt -= readCnt;
             bufp += readCnt;
         }
@@ -82,16 +82,17 @@ ssize_t Rio_readn(Rio *rp, void *usrbuf, size_t n) {
  * @returns             真正读取到的字符数量
  */
 ssize_t Rio_readline(Rio *rp, void *usrbuf, size_t maxlen) {
-    size_t totCnt;
+    size_t totCnt = 0;
     ssize_t readCnt;
     char c, *bufp = (char *)usrbuf;
 
-    for(totCnt=0; totCnt<maxlen; totCnt++) {   //n代表已接收字符的数量
+    for(int i=0; i<maxlen; i++) {   //n代表已接收字符的数量
         if((readCnt=Rio_read(rp, &c, 1)) == 1) {
             if(c == '\n')
                 continue;
             if(c == '\r')
                 break;
+            ++totCnt;
             *bufp++ = c;
         }
         else if(readCnt == 0)        //socket 关闭
