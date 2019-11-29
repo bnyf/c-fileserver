@@ -1,5 +1,5 @@
 /*
- * -> gcc -o test test.c && ./test
+ * -> gcc -o client client.c && ./client
  */
 
 #include <stdio.h>
@@ -11,7 +11,7 @@
 int main(int argc, char* argv[]) {
 	int socket_desc;
 	struct sockaddr_in server;
-	char reply[2000];
+	char buf[2000];
 
 	// create socket
 	if( (socket_desc = socket(AF_INET, SOCK_STREAM, 0)) == -1) { //IPv4, TCP, IP
@@ -48,16 +48,16 @@ int main(int argc, char* argv[]) {
 	}
 
 	// receive data
-	while( ( n = recv(socket_desc, reply, 2000, 0) ) >= 0 ){
+	if( ( n = read(socket_desc, buf, 2000) ) >= 0 ){
 		if(n == -1 && errno != EINTR){
 			printf("sned error.\n");
 			return 1;
 		}
-		else if(n == 0)
-			break;
-		reply[n] = 0;
-		printf("data recv: %d\n",n);
-		printf("%s\n",reply);
+		if(n != 0) {
+            buf[n] = 0;
+            printf("data recv: %d\n", n);
+            printf("%s\n", buf);
+        }
 	}
 
 	close(socket_desc);
