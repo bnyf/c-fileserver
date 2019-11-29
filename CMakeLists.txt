@@ -17,7 +17,6 @@ add_executable(c_fileserver
         src/tools.h
         src/url_parser.c
         src/url_parser.h
-        src/response_demo.c
         src/FilePresenter.h
         src/FilePresenter.c
         src/response.h

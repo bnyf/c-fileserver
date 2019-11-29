@@ -154,4 +154,5 @@ Rio* newRio(int fd) {
 
 void freeRio(Rio *rp) {
     free(rp);
+    close(rp->rioFd);
 }

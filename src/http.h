@@ -3,6 +3,7 @@
 
 #include "tools.h"
 #include "url_parser.h"
+#include "rio.h"
 
 #define LF '\n'
 #define CR '\r'
@@ -154,15 +155,15 @@ uint32_t read_http(int fd,int *statue_code);
 request_message pre_Process(char *message,int* error);
 
 /*生成响应报文*/
-uint32_t send_Message(int fd,int statue_code, char *res);
+uint32_t send_Message(Rio *rio,int * statue_code, const char *res);
 
 /*根据请求报文转入相应处理函数执行*/
-uint32_t execReq(request_message *req,int fd,int *statue_code);
+uint32_t execReq(request_message *req,Rio *rio,int *statue_code);
 
 /*执行GET方法处理请求*/
-uint32_t do_get(request_message *req,int fd,int *statue_code);
+uint32_t do_get(request_message *req,Rio *rio,int *statue_code);
 
 /*执行POST方法处理请求*/
-uint32_t do_post(request_message *req,int fd,int *statue_code);
+uint32_t do_post(request_message *req,Rio *rio,int *statue_code);
 
 #endif

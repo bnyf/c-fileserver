@@ -94,15 +94,20 @@ uint32_t read_http(int fd,int *statue_code)
 {
     request_message req;
 
-    char * data;//数据接收
+    char data[__MAXLENGTH__];//数据接收
+
     //初始化socket接口
-    Rio *rio = newRio(fd); 
+    Rio *rio = newRio(fd);
+    int n=0;
     //第一次读取请求行
-    rio->readline(rio,data, __MAXLENGTH__);
+     n=rio->readline(rio,data, __MAXLENGTH__);
+     printf("%d %s\n",n, data);
 
     //处理请求行
     char *req_line[3] = {0};
+
     int rl_num = split(data, " ", req_line);
+
     if(rl_num!=3)
     {
         *statue_code=__REQUEST_ERROR__;
@@ -110,15 +115,30 @@ uint32_t read_http(int fd,int *statue_code)
         return __ERROR__;
     }
     req.rl= (request_line *)malloc(sizeof(request_line));// 为请求行分配空间
-    req.rl->method = (char *)malloc(sizeof(char) * strlen(req_line[0]));
+    req.rl->method = (char *)malloc(sizeof(char) *( strlen(req_line[0])+1));
     strcpy(req.rl->method,req_line[0]);
-    req.rl->url = (char *)malloc(sizeof(char) * strlen(req_line[1]));
+    req.rl->url = (char *)malloc(sizeof(char) * (strlen(req_line[1])+1));
     strcpy(req.rl->url,req_line[1]);
-    req.rl->version = (char *)malloc(sizeof(char) * strlen(req_line[2]));
+    req.rl->version = (char *)malloc(sizeof(char) * (strlen(req_line[2])+1));
     strcpy(req.rl->version,req_line[2]);
 
+    int res= execReq(&req,rio,statue_code);
+
+    *statue_code=200;
+
+
+    free(req.rl->method);
+    req.rl->method=NULL;
+    free(req.rl->url);
+    req.rl->url=NULL;
+    free(req.rl->version);
+    req.rl->version=NULL;
+    free(req.rl);
+    req.rl=NULL;
+
+    freeRio(rio);
     //默认返回ok
-    return  execReq(&req,fd,statue_code);
+    return  res;
 }
 
 
@@ -131,12 +151,14 @@ uint32_t read_http(int fd,int *statue_code)
  *         @res 响应报文字符流
  * return: 响应报文
 */
-uint32_t send_Message(int fd,int statue_code,char * res)
+uint32_t send_Message(Rio *rio,int * statue_code,const char * res)
 {
     //创建socket接口
-    Rio *rio = newRio(fd); 
+    //Rio *rio = newRio(fd);
+    printf("send in\n");
     uint32_t res_len=strlen(res);
     rio->writen(rio,res,res_len);
+    printf("send back\n");
     return __OK__;
 }
 
@@ -149,12 +171,12 @@ uint32_t send_Message(int fd,int statue_code,char * res)
  *         @statue_code 状态码
  * return: 成功返回0，失败返回-1;
 */
-uint32_t execReq(request_message * req,int fd,int *statue_code)
+uint32_t execReq(request_message * req,Rio *rio,int *statue_code)
 {
     if(!strcmp(req->rl->method,"GET"))
-        return do_get(req,fd,statue_code);
+        return do_get(req,rio,statue_code);
     else if(!strcmp(req->rl->method,"POST"))
-        return do_post(req,fd,statue_code);
+        return do_post(req,rio,statue_code);
     /*此处添加其他方法跳转函数*/
     else
         return __ERROR__;
@@ -169,34 +191,36 @@ uint32_t execReq(request_message * req,int fd,int *statue_code)
  *         @statue_code 状态码
  * return: 成功返回0，失败返回-1;
 */
-uint32_t do_get(request_message *req,int fd,int * statue_code)
+uint32_t do_get(request_message *req,Rio *rio,int * statue_code)
 {
     //读取头部字段并丢弃
-    char * head;
-    Rio *rio = newRio(fd); 
+    char head[__MAXLENGTH__];
+    //Rio *rio = newRio(fd);
     while(true)
     {
-        rio->readline(rio,head, __MAXLENGTH__);
-        if(strlen(head)==0){
-            break;
-        }
-
+        int count=0;
+        count=rio->readline(rio,head, __MAXLENGTH__);
+        printf("%d %s\n",count, head);
+        if(count==0){break;}
     }
+
     //解析URL
     url_data_t *url_info = NULL;
     url_info = url_parse(req->rl->url);
     //url_data_inspect(url_info);
     char *filepath=url_info->pathname;
-    //printf("filepath:%s\n",filepath);
+    printf("filepath:%s\n",filepath);
     /*将文件解析地址传入处理函数,需要配合响应函数写*/
-    char *res_seq=generateFullFileDownLoadResponse(filepath);
-    if(!send_Message(fd,*statue_code,res_seq))
+//    char *res_seq=generateFullFileDownLoadResponse(filepath);
+    char *res_seq="http ok";
+    printf("zj:%s\n",res_seq);
+    int res=send_Message(rio,statue_code,res_seq);
+    //free(res_seq);
+    if(!res)
     {
         *statue_code=__INTERNAL_SERVER_ERROR__;
         return __ERROR__;
     }
-    free(filepath);
-    free(res_seq);
     return __OK__;
 }
 
@@ -209,12 +233,12 @@ uint32_t do_get(request_message *req,int fd,int * statue_code)
  *         @statue_code 状态码
  * return: 成功返回0，失败返回-1;
 */
-uint32_t do_post(request_message *req,int fd,int *statue_code)
+uint32_t do_post(request_message *req,Rio *rio,int *statue_code)
 {
     //如果是POST方法，读取Content-Length字段
     //读取头部字段并丢弃
-    char * head;
-    Rio *rio = newRio(fd); 
+    char head[__MAXLENGTH__];
+    //Rio *rio = newRio(fd);
     req->rh= (request_head *)malloc(sizeof(request_head));// 为请求头部分配空间
     while(true)
     {
@@ -239,6 +263,7 @@ uint32_t do_post(request_message *req,int fd,int *statue_code)
             strcpy(req->rh->content_length,rh_head[1]);
         }
     }
+
     //如果读取不到，发送请求错误报文；如果读取正常，发送200的响应报文
 
     if(req->rh->content_length==NULL)

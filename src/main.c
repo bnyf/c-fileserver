@@ -20,21 +20,26 @@ int main(int argc, char* argv[]) {
 
 	socket_desc = create_server();
 
+	int count=0;
 	//accept and send data
 	while( (new_socket = accept(socket_desc, (struct sockaddr*)&client, &new_socket_len )) ) {
-		Rio *rio = newRio(new_socket);
-		ssize_t n;
-		printf("recv data: \n");
-		while((n = rio->readline(rio, recv, 2000)) != 0){
-			printf("%d %s\n",n, recv);
-		}
-		printf("\n");
+//	    if(new_socket<0)
+//            continue;
+	    int statue_code=0;
+		read_http(new_socket,&statue_code);
 
-		n = rio->writen(rio, reply, strlen(reply));
-		printf("send num: %d\n", n);
-		freeRio(rio);
-		close(new_socket);
-		printf("\n\n");
+//		Rio *rio = newRio(new_socket);
+//		ssize_t n;
+//		printf("recv data: \n");
+//		while((n = rio->readline(rio, recv, 2000)) != 0){
+//			printf("%d %s\n",n, recv);
+//		}
+//		printf("\n");
+//
+//		n = rio->writen(rio, reply, strlen(reply));
+//		printf("send num: %d\n", n);
+//		freeRio(rio);
+//		printf("\n\n");
 	}
 	// //start_serv();
 		

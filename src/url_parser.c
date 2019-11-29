@@ -93,7 +93,7 @@ url_data_t * url_parse (char *url) {
     if (!protocol)
     {
         //默认为http协议
-        protocol=malloc(sizeof(char)*4);
+        protocol=(char *)malloc(sizeof(char)*4);
         protocol="http";
         protocol_len = 0;
     } else{
