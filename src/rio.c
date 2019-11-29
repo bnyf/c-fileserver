@@ -88,12 +88,13 @@ ssize_t Rio_readline(Rio *rp, void *usrbuf, size_t maxlen) {
 
     for(int i=0; i<maxlen; i++) {   //n代表已接收字符的数量
         if((readCnt=Rio_read(rp, &c, 1)) == 1) {
-            if(c == '\n')
-                continue;
             if(c == '\r')
+                continue;
+            if(c == '\n')
                 break;
             ++totCnt;
-            *bufp++ = c;
+            *bufp = c;
+            ++bufp;
         }
         else if(readCnt == 0)        //socket 关闭
             break;
@@ -141,7 +142,7 @@ ssize_t Rio_writen(Rio *rp, void *usrbuf, size_t n) {
  * @param fd        文件描述符
  */
 Rio* newRio(int fd) {
-    Rio* rio = malloc(sizeof(rio));
+    Rio* rio = malloc(sizeof(Rio));
     rio->rioFd = fd;
     rio->rioCnt = 0;
     rio->rioBufptr = rio->rioBuf;
