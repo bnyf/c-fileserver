@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <sys/errno.h>
 #include <stdio.h>
+#include <event2/event.h>
 
 #define RIO_BUFSIZE 4096
 
@@ -16,13 +17,14 @@ typedef struct _Rio{
     size_t rioCnt;        //缓冲区中还未读取的字节数
     char *rioBufptr;   //当前下一个未读取字符的地址
     char rioBuf[RIO_BUFSIZE];
+    struct event* ev;
 
     ssize_t (*readn)(struct _Rio *rp, void *usrbuf, size_t n);
     ssize_t (*readline)(struct _Rio *rp, void *usrbuf, size_t maxlen);
     ssize_t (*writen)(struct _Rio *rp, void *usrbuf, size_t n);
 } Rio;
 
-Rio* newRio(int fd);
+Rio* newRio(int fd, struct event* ev);
 void freeRio(Rio *rp);
 
 #endif

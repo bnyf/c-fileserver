@@ -55,17 +55,21 @@ void accept_cb(int fd, short events, void* arg)
 
     //动态创建一个event结构体，并将其作为回调参数传递给
     struct event* ev = event_new(NULL, -1, 0, NULL, NULL);
-    event_assign(ev, base, sockfd, EV_READ | EV_PERSIST, socket_read_cb, (void*)ev);
+    Rio *rio = newRio(fd, ev);
+    event_assign(ev, base, sockfd, EV_READ | EV_PERSIST, socket_read_cb, (void*)rio);
 
     event_add(ev, NULL);
 }
 
 void socket_read_cb(int fd, short events, void* arg)
 {
-    struct event* ev = (struct event*)arg;
+//    struct event* ev = (struct event*)arg;
+    Rio *rio = (Rio *)arg;
 
     int statue_code;
-    read_http(fd,&statue_code);
+    if(read_http(fd,&statue_code) != 1){
+        freeRio(rio);
+    }
 
-    event_free(ev);
+
 }
