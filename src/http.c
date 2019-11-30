@@ -282,12 +282,20 @@ uint32_t do_post(request_message *req, Rio *rio, uint32_t *statue_code) {
     char *filepath = url_info->pathname;
     printf("filepath:%s\n", filepath);
 
-    //解析content
-    char *boundry = strstr(req->rh->content_type, "=") + 1;
-    printf("Boundry:%s\n", boundry);
-
+    char *res_seq = NULL;
     uint32_t res_length = 0;
-    char *res_seq = generateFullFileUpLoadResponseWithParseBody(filepath, req->body, boundry, req->rh, &res_length);
+    if (strstr(req->rh->content_type, "multipart/form-data") != NULL) {
+        //解析content
+        char *boundry = strstr(req->rh->content_type, "=") + 1;
+        printf("Boundry:%s\n", boundry);
+        res_seq = generateFullFileUpLoadResponseWithParseBody(filepath, req->body, boundry, req->rh, &res_length);
+    }
+    else
+    {
+        *statue_code = __INTERNAL_SERVER_ERROR__;
+        return __ERROR__;
+    }
+
     printf("req_seq:%s\n", res_seq);
     uint32_t res = send_Message(rio, statue_code, res_seq, res_length);
     free(res_seq);
