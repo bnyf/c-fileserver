@@ -7,6 +7,7 @@
 #include "string.h"
 #include "sys/socket.h"
 #include "FilePresenter.h"
+#include "file.h"
 
 static uint32_t getfileLength(FILE* file){
 
@@ -64,7 +65,7 @@ static char* onInternalServerError(request_head* requestHeader){
 
 char* generateFullFileDownLoadResponse(char* filePath,request_head* requestHeader){
 
-    FILE* file = fopen(filePath,"rb");
+    FILE* file = openFileWithCustomedPath(filePath,"rb");
     if(file == 0){
 
         return onFileNotFound(requestHeader);
@@ -229,7 +230,7 @@ char* generateFullFileUpLoadResponseWithParseBody(char* path,char* content,char*
 
             return onBoundaryParseError();
         }
-        FILE* file = fopen(fileName,"wb");
+        FILE* file = openFileWithCustomedPath(fileName,"wb");
 
         fwrite(fileContent, sizeof(char),fileContentLength,file);
         if(ferror(file)){
@@ -283,7 +284,7 @@ static void generateChunkedPart(char* buffer,uint32_t chunkedSize,char* chunkedC
 
 void doChunkedFileDownLoadResponse(char* filePath,int32_t socketNum,request_head* requestHeader){
 
-    FILE* file = fopen(filePath,"rb");
+    FILE* file = openFileWithCustomedPath(filePath,"rb");
     if(file == 0){
 
         char* res = onFileNotFound(requestHeader);
@@ -400,7 +401,7 @@ void doChunkedFileDownLoadResponse(char* filePath,int32_t socketNum,request_head
 void doChunkedFileUpLoadResponseWithParseBody(char* filePath,int32_t socketNum,request_head* requestHeader){
 
     uint32_t size = 0;
-    FILE* file = fopen(filePath,"wb");
+    FILE* file = openFileWithCustomedPath(filePath,"wb");
     if(file == 0){
 
         char* res = onFileNotFound(requestHeader);
@@ -447,7 +448,7 @@ void doChunkedFileUpLoadResponseWithParseBody(char* filePath,int32_t socketNum,r
 
 int32_t doFileUpLoad(char* filePath,char* content){
 
-    FILE* file = fopen(filePath,"wb");
+    FILE* file = openFileWithCustomedPath(filePath,"wb");
 
     uint32_t size = strlen(content);
     fwrite(content, sizeof(char), sizeof(char)*size,file);
