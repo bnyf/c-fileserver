@@ -248,7 +248,7 @@ uint32_t do_get(request_message *req, Rio *rio, int *statue_code) {
     char *filepath = url_info->pathname;
     printf("filepath:%s\n", filepath);
     /*将文件解析地址传入处理函数,需要配合响应函数写*/
-    char *res_seq = generateFullFileDownLoadResponse(filepath);
+    char *res_seq = generateFullFileDownLoadResponse(filepath,req->rh);
     printf("%s\n", res_seq);
     int res = send_Message(rio, statue_code, res_seq);
     //free(res_seq);
