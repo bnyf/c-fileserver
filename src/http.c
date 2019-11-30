@@ -119,9 +119,9 @@ uint32_t read_http(Rio *rio, int *statue_code) {
         *statue_code = 200;
 
 
-    if (!strcmp(req.rh->connection, "Closed")) {
-        if(res==__OK__)
-            res=__CLOSED__;
+    if (!strcmp(req.rh->connection, "closed")) {
+        if (res == __OK__)
+            res = __CLOSED__;
     }
 
     //释放请求行
@@ -140,7 +140,8 @@ uint32_t read_http(Rio *rio, int *statue_code) {
     req.rh->content_length = NULL;
     free(req.rh->host);
     req.rh->host = NULL;
-
+    free(req.rh->content_type);
+    req.rh->content_type = NULL;
     //默认返回ok
     return res;
 }
@@ -155,13 +156,13 @@ uint32_t read_http(Rio *rio, int *statue_code) {
  *         @res 响应报文字符流
  * return: 响应报文
 */
-uint32_t send_Message(Rio *rio, int *statue_code, const char *res) {
+uint32_t send_Message(Rio *rio, int *statue_code, const char *res, int res_len) {
     //创建socket接口
     //Rio *rio = newRio(fd);
-    printf("send in\n");
-    uint32_t res_len = strlen(res);
+   // printf("send in\n");
+    //res_len=strlen(res);
     rio->writen(rio, res, res_len);
-    printf("send back\n");
+    //printf("send back\n");
     return __OK__;
 }
 
@@ -175,25 +176,6 @@ uint32_t send_Message(Rio *rio, int *statue_code, const char *res) {
  * return: 成功返回0，失败返回-1;
 */
 uint32_t execReq(request_message *req, Rio *rio, int *statue_code) {
-    if (!strcmp(req->rl->method, "GET"))
-        return do_get(req, rio, statue_code);
-    else if (!strcmp(req->rl->method, "POST"))
-        return do_post(req, rio, statue_code);
-        /*此处添加其他方法跳转函数*/
-    else
-        return __ERROR__;
-}
-
-/**
- * name: do_get
- * desc: GET方法处理http请求
- * para:    
- *         @req 标准化的请求报文
- *         @fd socket描述符
- *         @statue_code 状态码
- * return: 成功返回0，失败返回-1;
-*/
-uint32_t do_get(request_message *req, Rio *rio, int *statue_code) {
     //读取头部字段,保留keep——alive字段
     char head[__MAXLENGTH__];
     //为请求头部分配空间
@@ -202,6 +184,7 @@ uint32_t do_get(request_message *req, Rio *rio, int *statue_code) {
     req->rh->host = NULL;
     req->rh->content_length = NULL;
     req->rh->connection = NULL;
+    req->rh->content_type = NULL;
 
     while (true) {
         int count = 0;
@@ -223,39 +206,56 @@ uint32_t do_get(request_message *req, Rio *rio, int *statue_code) {
             //多行同一类型请求，默认保存最后一次
             req->rh->content_length = (char *) malloc(sizeof(char) * strlen(rh_head[1]));
             strcpy(req->rh->content_length, rh_head[1]);
-            printf("%s\n", req->rh->content_length);
-
         }
         if (!strcmp(rh_head[0], "Connection")) {
             //多行同一类型请求，默认保存最后一次
             req->rh->connection = (char *) malloc(sizeof(char) * strlen(rh_head[1]));
             strcpy(req->rh->connection, rh_head[1]);
-            printf("%s\n", req->rh->connection);
         }
         if (!strcmp(rh_head[0], "Host")) {
             //多行同一类型请求，默认保存最后一次
             req->rh->host = (char *) malloc(sizeof(char) * strlen(rh_head[1]));
             strcpy(req->rh->host, rh_head[1]);
-            printf("%s\n", req->rh->host);
         }
-
+        if (!strcmp(rh_head[0], "Content-Type")) {
+            //多行同一类型请求，默认保存最后一次
+            req->rh->content_type = (char *) malloc(sizeof(char) * strlen(rh_head[1]));
+            strcpy(req->rh->content_type, rh_head[1]);
+        }
     }
+    //跳转相应函数处理
+    if (!strcmp(req->rl->method, "GET"))
+        return do_get(req, rio, statue_code);
+    else if (!strcmp(req->rl->method, "POST"))
+        return do_post(req, rio, statue_code);
+        /*此处添加其他方法跳转函数*/
+    else
+        return __ERROR__;
+}
+
+/**
+ * name: do_get
+ * desc: GET方法处理http请求
+ * para:    
+ *         @req 标准化的请求报文
+ *         @fd socket描述符
+ *         @statue_code 状态码
+ * return: 成功返回0，失败返回-1;
+*/
+uint32_t do_get(request_message *req, Rio *rio, int *statue_code) {
 
     //解析URL
     url_data_t *url_info = NULL;
     url_info = url_parse(req->rl->url);
-//    url_data_inspect(url_info);
+    //    url_data_inspect(url_info);
     char *filepath = url_info->pathname;
     printf("filepath:%s\n", filepath);
     /*将文件解析地址传入处理函数,需要配合响应函数写*/
-    char *res_seq = generateFullFileDownLoadResponse(filepath,req->rh);
+    int res_length = 0;
+    char *res_seq = generateFullFileDownLoadResponse(filepath, req->rh,&res_length);
     printf("%s\n", res_seq);
-    int res = send_Message(rio, statue_code, res_seq);
-    //free(res_seq);
-
-//    //释放请求头部
-//    free(req->rh);
-//    req->rh=NULL;
+    int res = send_Message(rio, statue_code, res_seq, res_length);
+    free(res_seq);
     //判断返回值
     if (!res) {
         *statue_code = __INTERNAL_SERVER_ERROR__;
@@ -274,39 +274,59 @@ uint32_t do_get(request_message *req, Rio *rio, int *statue_code) {
  * return: 成功返回0，失败返回-1;
 */
 uint32_t do_post(request_message *req, Rio *rio, int *statue_code) {
-    //如果是POST方法，读取Content-Length字段
-    //读取头部字段并丢弃
-    char head[__MAXLENGTH__];
-    //Rio *rio = newRio(fd);
-    req->rh = (request_head *) malloc(sizeof(request_head));// 为请求头部分配空间
-    while (true) {
-        rio->readline(rio, head, __MAXLENGTH__);
-        if (strlen(head) == 0) {
-            break;
-        }
-        //寻找content-length
-        char *rh_head[2] = {0};
-        int rh_head_num = split(head, ":", rh_head);
-        /*当请求项错误的时候，直接退出，并置状态码*/
-        if (rh_head_num != 2) {
-            *statue_code = __REQUEST_ERROR__;
-            return __ERROR__;
-        }
-        //复制
-        if (!strcmp(rh_head[0], "Content-Length")) {
-            //多行同一类型请求，默认保存最后一次
-            req->rh->content_length = (char *) malloc(sizeof(char) * strlen(rh_head[1]));
-            strcpy(req->rh->content_length, rh_head[1]);
-        }
-    }
+//    //如果是POST方法，读取Content-Length字段
+//    //读取头部字段并丢弃
+//    char head[__MAXLENGTH__];
+//    //Rio *rio = newRio(fd);
+//    req->rh = (request_head *) malloc(sizeof(request_head));// 为请求头部分配空间
+//    req->rh->host = NULL;
+//    req->rh->content_length = NULL;
+//    req->rh->connection = NULL;
+//
+//    while (true) {
+//        int count = 0;
+//        count = rio->readline(rio, head, __MAXLENGTH__);
+//        if (count == 0) {
+//            break;
+//        }
+//        //寻找content-length
+//        char *rh_head[2] = {0};
+//        int rh_head_num = split(head, ":", rh_head);
+//        /*当请求项错误的时候，直接退出，并置状态码*/
+//        if (rh_head_num != 2) {
+//            *statue_code = __REQUEST_ERROR__;
+//            return __ERROR__;
+//        }
+//        //复制
+//        if (!strcmp(rh_head[0], "Content-Length")) {
+//            //多行同一类型请求，默认保存最后一次
+//            req->rh->content_length = (char *) malloc(sizeof(char) * strlen(rh_head[1]));
+//            strcpy(req->rh->content_length, rh_head[1]);
+//            printf("%s\n", req->rh->content_length);
+//
+//        }
+//        if (!strcmp(rh_head[0], "Connection")) {
+//            //多行同一类型请求，默认保存最后一次
+//            req->rh->connection = (char *) malloc(sizeof(char) * strlen(rh_head[1]));
+//            strcpy(req->rh->connection, rh_head[1]);
+//            printf("%s\n", req->rh->connection);
+//        }
+//        if (!strcmp(rh_head[0], "Host")) {
+//            //多行同一类型请求，默认保存最后一次
+//            req->rh->host = (char *) malloc(sizeof(char) * strlen(rh_head[1]));
+//            strcpy(req->rh->host, rh_head[1]);
+//            printf("%s\n", req->rh->host);
+//        }
+//
+//    }
 
     //如果读取不到，发送请求错误报文；如果读取正常，发送200的响应报文
-
     if (req->rh->content_length == NULL) {
         *statue_code = __REQUEST_ERROR__;
         printf("POST Request not found Content_Length!!");
         return __ERROR__;
     }
+
 
     ///////上载文件
 

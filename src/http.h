@@ -49,6 +49,7 @@ typedef struct {
     char *host;                 //请求资源所在服务器
     char *connection;        //逐跳首部、连接的管理
     char *content_length;       //标识post报文主体长度
+    char *content_type;       //标识post报文主体类型
     //char *accept;               //用户可处理的媒体类型
     //char *accept_language;      //优先的自然语言
     // char *accept_encoding;      //优先的内容编码
@@ -150,7 +151,7 @@ uint32_t read_http(Rio *rio, int *statue_code);
 request_message pre_Process(char *message, int *error);
 
 /*生成响应报文*/
-uint32_t send_Message(Rio *rio, int *statue_code, const char *res);
+uint32_t send_Message(Rio *rio, int *statue_code, const char *res,int res_len);
 
 /*根据请求报文转入相应处理函数执行*/
 uint32_t execReq(request_message *req, Rio *rio, int *statue_code);
