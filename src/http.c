@@ -160,6 +160,7 @@ uint32_t send_Message(Rio *rio, int *statue_code, const char *res) {
     //Rio *rio = newRio(fd);
     printf("send in\n");
     uint32_t res_len = strlen(res);
+    printf("%d\n",res_len);
     rio->writen(rio, res, res_len);
     printf("send back\n");
     return __OK__;
@@ -248,7 +249,8 @@ uint32_t do_get(request_message *req, Rio *rio, int *statue_code) {
     char *filepath = url_info->pathname;
     printf("filepath:%s\n", filepath);
     /*将文件解析地址传入处理函数,需要配合响应函数写*/
-    char *res_seq = generateFullFileDownLoadResponse(filepath,req->rh);
+    uint32_t  length = 0;
+    char *res_seq = generateFullFileDownLoadResponse(filepath,req->rh,&length);
     printf("%s\n", res_seq);
     int res = send_Message(rio, statue_code, res_seq);
     //free(res_seq);

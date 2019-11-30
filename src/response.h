@@ -74,10 +74,11 @@ void free_ResponseHeader(ResponseHeader* responseHeader);
 typedef struct ResponseBody{
 
     char* content;
+    uint32_t contentLength;
 
 }ResponseBody;
-void init_ResponseBody(ResponseBody* responseBody,char* content);
-ResponseBody* new_ResponseBody(char* content);
+void init_ResponseBody(ResponseBody* responseBody,char* content,uint32_t contentLength);
+ResponseBody* new_ResponseBody(char* content,uint32_t contentLength);
 char* generateResponseBodyStr(ResponseBody* responseBody);
 void free_ResponseBody(ResponseBody* responseBody);
 
@@ -90,7 +91,7 @@ typedef struct Response{
 }Response;
 void init_Response(Response* response,ResponseStatusLine* statusLine,ResponseHeader* responseHeader,ResponseBody* responseBody);
 Response* new_Response(ResponseStatusLine* statusLine,ResponseHeader* responseHeader,ResponseBody* responseBody);
-char* generateResponseStr(Response* response);
+char* generateResponseStr(Response* response,uint32_t* responseLength);
 void free_Response(Response* response);
 
 #endif //FILEUPANDDOWN_RESPONSE_H

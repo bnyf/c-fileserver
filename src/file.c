@@ -12,6 +12,11 @@ FILE* openFileWithCustomedPath(char* path,char* mode){
 
         return 0;
     }
+    int res = strcmp(path,"/");
+    if(res == 0){
+
+        return 0;
+    }
     uint32_t length = strlen(path);
     char arr[length + strlen(CUSTOMED_PATH) + 1];
     arr[0] = 0;

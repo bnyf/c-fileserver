@@ -19,7 +19,7 @@ static uint32_t getfileLength(FILE* file){
 
 }
 
-static char* onFileNotFound(request_head* requestHeader){
+static char* onFileNotFound(request_head* requestHeader,uint32_t* length){
 
     ResponseStatusLine* responseStatusLine = new_ResponseStatusLine(HTTP_VERSION1_1,NOT_FOUND_CODE);
     Response* response = 0;
@@ -34,14 +34,14 @@ static char* onFileNotFound(request_head* requestHeader){
     }
 
 
-    char* res = generateResponseStr(response);
+    char* res = generateResponseStr(response,length);
     free_Response(response);
 
     return res;
 
 }
 
-static char* onInternalServerError(request_head* requestHeader){
+static char* onInternalServerError(request_head* requestHeader,uint32_t* responseLength){
 
 
     ResponseStatusLine* responseStatusLine = new_ResponseStatusLine(HTTP_VERSION1_1,INTERNAL_SERVER_ERROR_CODE);
@@ -57,18 +57,18 @@ static char* onInternalServerError(request_head* requestHeader){
     }
 
 
-    char* res = generateResponseStr(response);
+    char* res = generateResponseStr(response,responseLength);
     free_Response(response);
     return res;
 
 }
 
-char* generateFullFileDownLoadResponse(char* filePath,request_head* requestHeader){
+char* generateFullFileDownLoadResponse(char* filePath,request_head* requestHeader,uint32_t* responseLength){
 
     FILE* file = openFileWithCustomedPath(filePath,"rb");
     if(file == 0){
 
-        return onFileNotFound(requestHeader);
+        return onFileNotFound(requestHeader,responseLength);
 
     }
     else{
@@ -79,23 +79,23 @@ char* generateFullFileDownLoadResponse(char* filePath,request_head* requestHeade
         if(ferror(file)){
 
             fclose(file);
-            return onInternalServerError(requestHeader);
+            return onInternalServerError(requestHeader,responseLength);
         }
         fileContent[size] = 0;
         ResponseStatusLine* responseStatusLine = new_ResponseStatusLine(HTTP_VERSION1_1,OK_CODE);
         ResponseHeader* responseHeader = 0;
         if(requestHeader == 0 || requestHeader->connection == 0){
 
-            responseHeader = new_ResponseHeader(CONTENT_TYPE_VALUE_FILE,fileLength,ACCEPT_RANGES_VALUES_BYTES,0);
+            responseHeader = new_ResponseHeader(CONTENT_TYPE_VALUE_FILE,size,ACCEPT_RANGES_VALUES_BYTES,0);
         }
         else{
 
-            responseHeader = new_ResponseHeader(CONTENT_TYPE_VALUE_FILE,fileLength,ACCEPT_RANGES_VALUES_BYTES,requestHeader->connection);
+            responseHeader = new_ResponseHeader(CONTENT_TYPE_VALUE_FILE,size,ACCEPT_RANGES_VALUES_BYTES,requestHeader->connection);
         }
 
-        ResponseBody* responseBody = new_ResponseBody(fileContent);
+        ResponseBody* responseBody = new_ResponseBody(fileContent,size);
         Response* response = new_Response(responseStatusLine,responseHeader,responseBody);
-        char* res = generateResponseStr(response);
+        char* res = generateResponseStr(response,responseLength);
         free_Response(response);
 
         fclose(file);
@@ -200,7 +200,7 @@ static char* onBoundaryParseError(){
 }
 
 
-char* generateFullFileUpLoadResponseWithParseBody(char* path,char* content,char* boundary,request_head* requestHeader){
+char* generateFullFileUpLoadResponseWithParseBody(char* path,char* content,char* boundary,request_head* requestHeader,uint32_t* responseLength){
 
     //FILE* file = fopen(filePath,"wb");
 
@@ -235,7 +235,7 @@ char* generateFullFileUpLoadResponseWithParseBody(char* path,char* content,char*
         fwrite(fileContent, sizeof(char),fileContentLength,file);
         if(ferror(file)){
             fclose(file);
-            return onInternalServerError(requestHeader);
+            return onInternalServerError(requestHeader,responseLength);
         }
 
         fclose(file);
@@ -253,7 +253,7 @@ char* generateFullFileUpLoadResponseWithParseBody(char* path,char* content,char*
         response = new_Response(responseStatusLine,0,0);
     }
 
-    char* res = generateResponseStr(response);
+    char* res = generateResponseStr(response,responseLength);
     free_Response(response);
 
     return res;
@@ -287,8 +287,9 @@ void doChunkedFileDownLoadResponse(char* filePath,int32_t socketNum,request_head
     FILE* file = openFileWithCustomedPath(filePath,"rb");
     if(file == 0){
 
-        char* res = onFileNotFound(requestHeader);
-        send(socketNum,res,strlen(res),0);
+        uint32_t length = 0;
+        char* res = onFileNotFound(requestHeader,&length);
+        send(socketNum,res,length,0);
         free(res);
         return;
 
@@ -310,8 +311,9 @@ void doChunkedFileDownLoadResponse(char* filePath,int32_t socketNum,request_head
     uint32_t size = fread(temp, sizeof(char),CHUNKED_PART_SIZE,file);
     if(ferror(file)){
 
-        char* res = onInternalServerError(requestHeader);
-        send(socketNum,res,strlen(res),0);
+        uint32_t length = 0;
+        char* res = onInternalServerError(requestHeader,&length);
+        send(socketNum,res,length,0);
         free(res);
         fclose(file);
         return;
@@ -338,10 +340,11 @@ void doChunkedFileDownLoadResponse(char* filePath,int32_t socketNum,request_head
 
     }
 
-    ResponseBody* responseBody = new_ResponseBody(buffer);
+    ResponseBody* responseBody = new_ResponseBody(buffer,size);
     Response* response = new_Response(responseStatusLine,responseHeader,responseBody);
-    char* res = generateResponseStr(response);
-    send(socketNum,res,strlen(res),0);
+    uint32_t length = 0;
+    char* res = generateResponseStr(response,&length);
+    send(socketNum,res,length,0);
     free_ResponseStatusLine(responseStatusLine);
     free_ResponseHeader(responseHeader);
     free(responseBody);
@@ -359,8 +362,9 @@ void doChunkedFileDownLoadResponse(char* filePath,int32_t socketNum,request_head
         size = fread(temp, sizeof(char),CHUNKED_PART_SIZE,file);
         if(ferror(file)){
 
-            res = onInternalServerError(requestHeader);
-            send(socketNum,res,strlen(res),0);
+            uint32_t lengthTemp = 0;
+            res = onInternalServerError(requestHeader,&lengthTemp);
+            send(socketNum,res,lengthTemp,0);
             free(res);
             fclose(file);
             return;
@@ -404,8 +408,9 @@ void doChunkedFileUpLoadResponseWithParseBody(char* filePath,int32_t socketNum,r
     FILE* file = openFileWithCustomedPath(filePath,"wb");
     if(file == 0){
 
-        char* res = onFileNotFound(requestHeader);
-        send(socketNum,res,strlen(res),0);
+        uint32_t length = 0;
+        char* res = onFileNotFound(requestHeader,&length);
+        send(socketNum,res,length,0);
         free(res);
         return;
     }
@@ -426,7 +431,8 @@ void doChunkedFileUpLoadResponseWithParseBody(char* filePath,int32_t socketNum,r
         fwrite(temp, sizeof(char),length,file);
         if(ferror(file)){
 
-            char* res = onInternalServerError(requestHeader);
+            uint32_t lengthTemp = 0;
+            char* res = onInternalServerError(requestHeader,&lengthTemp);
             send(socketNum,res,strlen(res),0);
             free(res);
             fclose(file);
@@ -462,12 +468,12 @@ int32_t doFileUpLoad(char* filePath,char* content){
 
 }
 
-char* generateFullFileUpLoadResponse(char* filePath,char* content,request_head* requestHeader){
+char* generateFullFileUpLoadResponse(char* filePath,char* content,request_head* requestHeader,uint32_t* responseLength){
 
 
     if(doFileUpLoad(filePath,content)){
 
-        return onInternalServerError(requestHeader);
+        return onInternalServerError(requestHeader,responseLength);
     }
     else{
 

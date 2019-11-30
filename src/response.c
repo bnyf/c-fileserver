@@ -247,16 +247,18 @@ void free_ResponseHeader(ResponseHeader* responseHeader){
 
 //ResponseBody Area
 
-void init_ResponseBody(ResponseBody* responseBody,char* content){
+void init_ResponseBody(ResponseBody* responseBody,char* content,uint32_t contentLength){
 
     responseBody->content = content;
+    responseBody->contentLength = contentLength;
 
 }
 
-ResponseBody* new_ResponseBody(char* content){
+ResponseBody* new_ResponseBody(char* content,uint32_t contentLength){
 
     ResponseBody* responseBody = malloc(sizeof(responseBody));
     responseBody->content = content;
+    responseBody->contentLength = contentLength;
     return responseBody;
 }
 
@@ -305,7 +307,7 @@ Response* new_Response(ResponseStatusLine* statusLine,ResponseHeader* responseHe
     return response;
 }
 
-char* generateResponseStr(Response* response){
+char* generateResponseStr(Response* response,uint32_t* responseLength){
 
     if(response == 0){
 
@@ -328,8 +330,13 @@ char* generateResponseStr(Response* response){
         responseBodyStr = generateResponseBodyStr(response->responseBody);
     }
 
+    uint32_t  bodyLength = 0;
+    if(responseBodyStr != 0){
 
-    uint32_t  bodyLength = strlen(responseBodyStr);
+        bodyLength = response->responseBody->contentLength;
+
+    }
+
     uint32_t length = RESPONSE_STATUS_LINE_STR_SIZE + RESPONSE_HEADER_STR_SIZE + bodyLength + 1;
     char* res = malloc(sizeof(char)*length);
     res[0] = 0;
@@ -346,10 +353,20 @@ char* generateResponseStr(Response* response){
 
         strcat(res,"\r\n");
     }
-    if(responseBodyStr != 0){
 
-        strcat(res,responseBodyStr);
+    uint32_t lineAndHeaderLength = strlen(res);
+    uint32_t i = 0;
+    for(;i < bodyLength;++i){
+
+        res[i+lineAndHeaderLength] = responseBodyStr[i];
     }
+    res[i+lineAndHeaderLength] = 0;
+
+    if(responseLength != 0){
+
+        *responseLength = i + lineAndHeaderLength;
+    }
+
     free(statusLineStr);
     free(responseHeaderStr);
 

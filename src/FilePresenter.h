@@ -10,11 +10,11 @@
 
 
 
-char* generateFullFileDownLoadResponse(char* filePath,request_head* requestHeader);
+char* generateFullFileDownLoadResponse(char* filePath,request_head* requestHeader,uint32_t* responseLength);
 
-char* generateFullFileUpLoadResponseWithParseBody(char* filePath,char* content,char* boundary,request_head* requestHeader);
+char* generateFullFileUpLoadResponseWithParseBody(char* filePath,char* content,char* boundary,request_head* requestHeader,uint32_t* responseLength);
 
-char* generateFullFileUpLoadResponse(char* filePath,char* content,request_head* requestHeader);
+char* generateFullFileUpLoadResponse(char* filePath,char* content,request_head* requestHeader,uint32_t* responseLength);
 
 void doChunkedFileDownLoadResponse(char* filePath,int32_t socketNum,request_head* requestHeader);
 
