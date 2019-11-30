@@ -67,7 +67,7 @@ void socket_read_cb(int fd, short events, void* arg)
     Rio *rio = (Rio *)arg;
 
     int statue_code;
-    if(read_http(fd,&statue_code) != 1){
+    if(read_http(rio,&statue_code) != 1){
         freeRio(rio);
     }
 
