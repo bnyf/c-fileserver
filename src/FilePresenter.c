@@ -261,37 +261,73 @@ char* generateFullFileUpLoadResponseWithParseBody(char* path,char* content,char*
 }
 
 
-static void generateChunkedPart(char* buffer,uint32_t chunkedSize,char* chunkedContent,int32_t whetherEOF){
+static void generateChunkedPart(char* buffer,uint32_t chunkedSize,const char* chunkedContent,int32_t whetherEOF,uint32_t* chunkTotalSize){
 
     buffer[0] = 0;
     if(chunkedSize > 0){
 
         char temp[50];
         sprintf(temp,"%x",chunkedSize);
+        *chunkTotalSize = strlen(temp) + chunkedSize + sizeof(char)*4;
         strcat(buffer,temp);
         strcat(buffer,"\r\n");
-        strcat(buffer,chunkedContent);
-        strcat(buffer,"\r\n");
+        uint32_t i = strlen(buffer);
+        uint32_t j = 0;
+        for(; j < chunkedSize; ++j){
+
+            buffer[j+i] = chunkedContent[j];
+        }
+        buffer[j+i] = '\r';
+        buffer[j+i+1] = '\n';
 
     }
 
     if(whetherEOF){
 
         strcat(buffer,"0\r\n");
+        *chunkTotalSize = sizeof(char)*3;
     }
 
 }
 
-void doChunkedFileDownLoadResponse(char* filePath,int32_t socketNum,request_head* requestHeader){
+void doChunkedFileDownLoadResponse(char* filePath,Rio *rio,request_head* requestHeader){
 
     FILE* file = openFileWithCustomedPath(filePath,"rb");
     if(file == 0){
 
         uint32_t length = 0;
         char* res = onFileNotFound(requestHeader,&length);
-        send(socketNum,res,length,0);
+        rio->writen(rio,res,length);
         free(res);
         return;
+
+    }
+
+
+
+    char temp[sizeof(char)*(CHUNKED_PART_SIZE+1)];
+    char buffer[sizeof(char)*(CHUNKED_PART_SIZE+15)];
+    uint32_t size = fread(temp, sizeof(char),CHUNKED_PART_SIZE,file);
+    if(ferror(file)){
+
+        uint32_t length = 0;
+        char* res = onInternalServerError(requestHeader,&length);
+        rio->writen(rio,res,length);
+        free(res);
+        fclose(file);
+        return;
+    }
+    temp[size] = 0;
+
+    uint32_t chunkSize = 0;
+    if(feof(file)){
+
+        generateChunkedPart(buffer,size,temp,1,&chunkSize);
+
+    }
+    else{
+
+        generateChunkedPart(buffer,size,temp,0,&chunkSize);
 
     }
 
@@ -305,46 +341,11 @@ void doChunkedFileDownLoadResponse(char* filePath,int32_t socketNum,request_head
 
         responseHeader = new_ResponseHeader1(CONTENT_TYPE_VALUE_FILE,TRANSFER_ENCODING_VALUE_CHUNKED,0);
     }
-
-    char temp[sizeof(char)*(CHUNKED_PART_SIZE+1)];
-    char buffer[sizeof(char)*(CHUNKED_PART_SIZE+15)];
-    uint32_t size = fread(temp, sizeof(char),CHUNKED_PART_SIZE,file);
-    if(ferror(file)){
-
-        uint32_t length = 0;
-        char* res = onInternalServerError(requestHeader,&length);
-        send(socketNum,res,length,0);
-        free(res);
-        fclose(file);
-        return;
-    }
-    temp[size] = 0;
-
-    if(feof(file)){
-
-        generateChunkedPart(buffer,size,temp,1);
-
-    }
-    else{
-
-//        if(size == 0){
-//
-//            char* res = onInternalServerError();
-//            send(socketNum,res,strlen(res),0);
-//            free(res);
-//            fclose(file);
-//            return;
-//
-//        }
-        generateChunkedPart(buffer,size,temp,0);
-
-    }
-
-    ResponseBody* responseBody = new_ResponseBody(buffer,size);
+    ResponseBody* responseBody = new_ResponseBody(buffer,chunkSize);
     Response* response = new_Response(responseStatusLine,responseHeader,responseBody);
     uint32_t length = 0;
     char* res = generateResponseStr(response,&length);
-    send(socketNum,res,length,0);
+    rio->writen(rio,res,length);
     free_ResponseStatusLine(responseStatusLine);
     free_ResponseHeader(responseHeader);
     free(responseBody);
@@ -364,7 +365,8 @@ void doChunkedFileDownLoadResponse(char* filePath,int32_t socketNum,request_head
 
             uint32_t lengthTemp = 0;
             res = onInternalServerError(requestHeader,&lengthTemp);
-            send(socketNum,res,lengthTemp,0);
+            rio->writen(rio,res,lengthTemp);
+
             free(res);
             fclose(file);
             return;
@@ -372,24 +374,18 @@ void doChunkedFileDownLoadResponse(char* filePath,int32_t socketNum,request_head
         temp[size] = 0;
         if(feof(file)){
 
-            generateChunkedPart(buffer,size,temp,1);
-            send(socketNum,buffer,strlen(buffer),0);
+            uint32_t lengthTemp = 0;
+            generateChunkedPart(buffer,size,temp,1,&lengthTemp);
+            rio->writen(rio,buffer,lengthTemp);
             fclose(file);
             return;
         }
         else{
 
-//            if(size == 0){
-//
-//                res = onInternalServerError();
-//                send(socketNum,res,strlen(res),0);
-//                free(res);
-//                fclose(file);
-//                return;
-//
-//            }
-            generateChunkedPart(buffer,size,temp,0);
-            send(socketNum,buffer,strlen(buffer),0);
+            uint32_t lengthTemp = 0;
+            generateChunkedPart(buffer,size,temp,0,&lengthTemp);
+            rio->writen(rio,buffer,lengthTemp);
+
 
         }
 
@@ -433,7 +429,7 @@ void doChunkedFileUpLoadResponseWithParseBody(char* filePath,int32_t socketNum,r
 
             uint32_t lengthTemp = 0;
             char* res = onInternalServerError(requestHeader,&lengthTemp);
-            send(socketNum,res,strlen(res),0);
+            send(socketNum,res,lengthTemp,0);
             free(res);
             fclose(file);
             return;
@@ -444,10 +440,21 @@ void doChunkedFileUpLoadResponseWithParseBody(char* filePath,int32_t socketNum,r
     }
 
     ResponseStatusLine* responseStatusLine = new_ResponseStatusLine(HTTP_VERSION1_1,OK_CODE);
-    char* res = generateStatusLineStr(responseStatusLine);
-    send(socketNum,res,strlen(res),0);
+    ResponseHeader* responseHeader;
+    if(requestHeader != 0 && requestHeader->connection != 0){
+
+        responseHeader = new_ResponseHeader(0,0,0,requestHeader->connection);
+    }
+    else{
+
+        responseHeader = new_ResponseHeader(0,0,0,0);
+    }
+    Response* response = new_Response(responseStatusLine,responseHeader,0);
+    uint32_t length = 0;
+    char* res = generateResponseStr(response,&length);
+    send(socketNum,res,length,0);
     free(res);
-    free_ResponseStatusLine(responseStatusLine);
+    free_Response(response);
     fclose(file);
 
 }
