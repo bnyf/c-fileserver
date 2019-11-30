@@ -22,8 +22,7 @@
 */
 
 //http协议使用的方法（该数据结构未使用）
-enum METHOD
-{
+enum METHOD {
     GET,
     POST,
     HEAD,
@@ -34,8 +33,7 @@ enum METHOD
     CONNECT
 };
 //http请求行
-typedef struct
-{
+typedef struct {
     char *method;
     char *url;
     char *version;
@@ -46,12 +44,12 @@ typedef struct
  * 下列为http/1.1规定的所有头部，不知道哪些是会用到的，全部列在下面。
  * 需要使用相应的头部字段，将注释去掉即可
  */
-typedef struct
-{
+typedef struct {
     char *host;                 //请求资源所在服务器
-    char *accept;               //用户可处理的媒体类型
-    char *accept_language;      //优先的自然语言
+    char *connection;        //逐跳首部、连接的管理
     char *content_length;       //标识post报文主体长度
+    //char *accept;               //用户可处理的媒体类型
+    //char *accept_language;      //优先的自然语言
     // char *accept_encoding;      //优先的内容编码
     // char *accept_charset;       //优先的字符集
     // char *authorization;        //web认证信息
@@ -72,7 +70,7 @@ typedef struct
 
     //通用首部字段
     // char *cache_control;     //控制缓存行为
-    // char *connection;        //逐跳首部、连接的管理
+
     // char *data;              //创建报文的日期时间
     // char *pragma;            //报文指令
     // char *trailer;           //报文末端的首部一览
@@ -83,16 +81,14 @@ typedef struct
 } request_head;
 
 //http请求报文
-typedef struct
-{
+typedef struct {
     request_line *rl;
     request_head *rh;
     char *body;
 } request_message;
 
 //http状态行
-typedef struct
-{
+typedef struct {
     char *version;
     int status_code;
     char *reason_phrase;
@@ -103,8 +99,7 @@ typedef struct
  * 下列为http/1.1规定的所有头部，不知道哪些是会用到的，全部列在下面。
  * 需要使用相应的头部字段，将注释去掉即可
  */
-typedef struct
-{
+typedef struct {
     //通用首部字段
     // char *cache_control;     //控制缓存行为
     // char *connection;        //逐跳首部、连接的管理
@@ -140,8 +135,7 @@ typedef struct
 } response_headers;
 
 //http响应报文
-typedef struct
-{
+typedef struct {
     status_line *sl;
     response_headers *rh;
     char *body;
@@ -149,21 +143,21 @@ typedef struct
 
 //-----------------------------------------------------------------------------------
 /*从tcp读取http流*/
-uint32_t read_http(int fd,int *statue_code);
+uint32_t read_http(int fd, int *statue_code);
 
 /*将字符流转化为标准http报文*/
-request_message pre_Process(char *message,int* error);
+request_message pre_Process(char *message, int *error);
 
 /*生成响应报文*/
-uint32_t send_Message(Rio *rio,int * statue_code, const char *res);
+uint32_t send_Message(Rio *rio, int *statue_code, const char *res);
 
 /*根据请求报文转入相应处理函数执行*/
-uint32_t execReq(request_message *req,Rio *rio,int *statue_code);
+uint32_t execReq(request_message *req, Rio *rio, int *statue_code);
 
 /*执行GET方法处理请求*/
-uint32_t do_get(request_message *req,Rio *rio,int *statue_code);
+uint32_t do_get(request_message *req, Rio *rio, int *statue_code);
 
 /*执行POST方法处理请求*/
-uint32_t do_post(request_message *req,Rio *rio,int *statue_code);
+uint32_t do_post(request_message *req, Rio *rio, int *statue_code);
 
 #endif
