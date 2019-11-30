@@ -30,6 +30,6 @@ add_executable(c_fileserver
         src/response.h
         src/response.c
         README.md
-        src/file.c src/file.h)
+        src/file.c src/file.h src/get_ip.c src/get_ip.h)
 
 target_link_libraries(c_fileserver libevent.a)
