@@ -150,7 +150,7 @@ uint32_t read_http(Rio *rio, int *statue_code);
 request_message pre_Process(char *message, int *error);
 
 /*生成响应报文*/
-uint32_t send_Message(Rio *rio, int *statue_code, const char *res,uint32_t length);
+uint32_t send_Message(Rio *rio, int *statue_code, const char *res);
 
 /*根据请求报文转入相应处理函数执行*/
 uint32_t execReq(request_message *req, Rio *rio, int *statue_code);
