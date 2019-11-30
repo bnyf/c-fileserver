@@ -48,7 +48,7 @@ typedef struct {
 typedef struct {
     char *host;                 //请求资源所在服务器
     char *connection;        //逐跳首部、连接的管理
-    char *content_length;       //标识post报文主体长度
+    uint32_t content_length;       //标识post报文主体长度
     char *content_type;       //标识post报文主体类型
     //char *accept;               //用户可处理的媒体类型
     //char *accept_language;      //优先的自然语言
@@ -145,21 +145,21 @@ typedef struct {
 
 //-----------------------------------------------------------------------------------
 /*从tcp读取http流*/
-uint32_t read_http(Rio *rio, int *statue_code);
+uint32_t read_http(Rio *rio, uint32_t *statue_code);
 
 /*将字符流转化为标准http报文*/
-request_message pre_Process(char *message, int *error);
+request_message pre_Process(char *message, uint32_t *error);
 
 /*生成响应报文*/
-uint32_t send_Message(Rio *rio, int *statue_code, const char *res,int res_len);
+uint32_t send_Message(Rio *rio, uint32_t *statue_code, const char *res, uint32_t res_len);
 
 /*根据请求报文转入相应处理函数执行*/
-uint32_t execReq(request_message *req, Rio *rio, int *statue_code);
+uint32_t execReq(request_message *req, Rio *rio, uint32_t *statue_code);
 
 /*执行GET方法处理请求*/
-uint32_t do_get(request_message *req, Rio *rio, int *statue_code);
+uint32_t do_get(request_message *req, Rio *rio, uint32_t *statue_code);
 
 /*执行POST方法处理请求*/
-uint32_t do_post(request_message *req, Rio *rio, int *statue_code);
+uint32_t do_post(request_message *req, Rio *rio, uint32_t *statue_code);
 
 #endif
