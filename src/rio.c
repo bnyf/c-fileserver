@@ -17,7 +17,7 @@ static ssize_t Rio_read(Rio *rp, char *usrbuf, size_t n) {
     while(rp->rioCnt <= 0) {
         readCnt = read(rp->rioFd, rp->rioBuf, sizeof(rp->rioBuf));
         if(readCnt < 0) {
-            if(errno != EINTR)
+            if(errno != EINTR && errno != EAGAIN)
                 return -1;
         }
         else if(readCnt == 0)   //socket 关闭
@@ -119,9 +119,7 @@ ssize_t Rio_writen(Rio *rp, void *usrbuf, size_t n) {
 
     while(leftCnt > 0) {
         if((writeCnt = write(rp->rioFd, bufp, leftCnt)) < 0) {
-            if(errno == EINTR)
-                writeCnt = 0;
-            else
+            if(errno != EINTR && errno != EAGAIN)
                 return -1;
         }
         else if(writeCnt == 0)
