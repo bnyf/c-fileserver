@@ -84,13 +84,12 @@ request_message pre_Process(char *message, int *error) {
  *     @statue_code       状态码
  * return: 请求报文
 */
-uint32_t read_http(int fd, int *statue_code) {
+uint32_t read_http(Rio *rio, int *statue_code) {
     request_message req;
 
     char data[__MAXLENGTH__];//数据接收
 
     //初始化socket接口
-    Rio *rio = newRio(fd);
     int n = 0;
     //第一次读取请求行
     n = rio->readline(rio, data, __MAXLENGTH__);
@@ -119,6 +118,12 @@ uint32_t read_http(int fd, int *statue_code) {
     if (!*statue_code)
         *statue_code = 200;
 
+
+    if (!strcmp(req.rh->connection, "Closed")) {
+        if(res==__OK__)
+            res=__CLOSED__;
+    }
+
     //释放请求行
     free(req.rl->method);
     req.rl->method = NULL;
@@ -136,8 +141,6 @@ uint32_t read_http(int fd, int *statue_code) {
     free(req.rh->host);
     req.rh->host = NULL;
 
-
-    freeRio(rio);
     //默认返回ok
     return res;
 }
@@ -220,20 +223,20 @@ uint32_t do_get(request_message *req, Rio *rio, int *statue_code) {
             //多行同一类型请求，默认保存最后一次
             req->rh->content_length = (char *) malloc(sizeof(char) * strlen(rh_head[1]));
             strcpy(req->rh->content_length, rh_head[1]);
-            printf("%s\n",req->rh->content_length);
+            printf("%s\n", req->rh->content_length);
 
         }
         if (!strcmp(rh_head[0], "Connection")) {
             //多行同一类型请求，默认保存最后一次
-            req->rh->connection= (char *) malloc(sizeof(char) * strlen(rh_head[1]));
+            req->rh->connection = (char *) malloc(sizeof(char) * strlen(rh_head[1]));
             strcpy(req->rh->connection, rh_head[1]);
-            printf("%s\n",req->rh->connection);
+            printf("%s\n", req->rh->connection);
         }
         if (!strcmp(rh_head[0], "Host")) {
             //多行同一类型请求，默认保存最后一次
-            req->rh->host= (char *) malloc(sizeof(char) * strlen(rh_head[1]));
+            req->rh->host = (char *) malloc(sizeof(char) * strlen(rh_head[1]));
             strcpy(req->rh->host, rh_head[1]);
-            printf("%s\n",req->rh->host);
+            printf("%s\n", req->rh->host);
         }
 
     }
