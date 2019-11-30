@@ -25,12 +25,12 @@ static char* onFileNotFound(request_head* requestHeader,uint32_t* length){
     Response* response = 0;
     if(requestHeader != 0 && requestHeader->connection != 0){
 
-        ResponseHeader* responseHeader = new_onErrorHeader(requestHeader->connection);
+        ResponseHeader* responseHeader = new_ResponseHeader(0,0,0,requestHeader->connection);
         response = new_Response(responseStatusLine,responseHeader,0);
     }
     else{
-
-        response = new_Response(responseStatusLine,0,0);
+        ResponseHeader* responseHeader = new_ResponseHeader(0,0,0,0);
+        response = new_Response(responseStatusLine,responseHeader,0);
     }
 
 
@@ -48,12 +48,12 @@ static char* onInternalServerError(request_head* requestHeader,uint32_t* respons
     Response* response = 0;
     if(requestHeader != 0 && requestHeader->connection != 0){
 
-        ResponseHeader* responseHeader = new_onErrorHeader(requestHeader->connection);
+        ResponseHeader* responseHeader = new_ResponseHeader(0,0,0,requestHeader->connection);
         response = new_Response(responseStatusLine,responseHeader,0);
     }
     else{
-
-        response = new_Response(responseStatusLine,0,0);
+        ResponseHeader* responseHeader = new_ResponseHeader(0,0,0,0);
+        response = new_Response(responseStatusLine,responseHeader,0);
     }
 
 
@@ -245,12 +245,12 @@ char* generateFullFileUpLoadResponseWithParseBody(char* path,char* content,char*
     Response* response = 0;
     if(requestHeader != 0 && requestHeader->connection != 0){
 
-        ResponseHeader* responseHeader = new_onErrorHeader(requestHeader->connection);
+        ResponseHeader* responseHeader = new_ResponseHeader(0,0,0,requestHeader->connection);
         response = new_Response(responseStatusLine,responseHeader,0);
     }
     else{
-
-        response = new_Response(responseStatusLine,0,0);
+        ResponseHeader* responseHeader = new_ResponseHeader(0,0,0,0);
+        response = new_Response(responseStatusLine,responseHeader,0);
     }
 
     char* res = generateResponseStr(response,responseLength);

@@ -200,7 +200,7 @@ char* generateResponseHeaderStr(ResponseHeader* responseHeader){
         strcat(headerStr,"\r\n");
     }
 
-    if(responseHeader->Content_Length > 0){
+    if(responseHeader->Content_Length >= 0){
 
         strcat(headerStr,CONTENT_LENGTH_KEY);
         char temp[sizeof(char)*15];
