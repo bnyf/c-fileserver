@@ -42,6 +42,8 @@ extern const char* TRANSFER_ENCODING_VALUE_CHUNKED;
 
 extern const char* CONNECTION_KEY;
 
+extern const char* CONTENT_DISPOSITION_FILE_NAME_KEY;
+
 typedef struct ResponseStatusLine{
 
     const char* version;

@@ -44,6 +44,8 @@ const char* TRANSFER_ENCODING_VALUE_CHUNKED = "chunked";
 
 const char* CONNECTION_KEY = "Connection:";
 
+const char* CONTENT_DISPOSITION_FILE_NAME_KEY = "Content-Disposition: attachment; filename=";
+
 static void intToStr(char* buffer,int32_t num){
 
     sprintf(buffer,"%d",num);
