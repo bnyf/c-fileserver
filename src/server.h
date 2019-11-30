@@ -8,6 +8,7 @@
 #include <rio.h>
 #include <event2/event.h>
 
+#include "get_ip.h"
 #include "http.h"
 
 int server_init();
