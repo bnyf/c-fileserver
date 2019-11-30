@@ -217,11 +217,26 @@ static int32_t getBoundary(char** contentPtr,char* start_template,char* end_temp
 
 }
 
-static char* onBoundaryParseError(){
+static char* onBoundaryParseError(request_head* requestHeader,uint32_t* length){
 
-    ResponseStatusLine responseStatusLine;
-    init_ResponseStatusLine(&responseStatusLine,HTTP_VERSION1_1,BAD_REQUEST_CODE);
-    return generateStatusLineStr(&responseStatusLine);
+
+    ResponseStatusLine* responseStatusLine = new_ResponseStatusLine(HTTP_VERSION1_1,BAD_REQUEST_CODE);
+    Response* response = 0;
+    if(requestHeader != 0 && requestHeader->connection != 0){
+
+        ResponseHeader* responseHeader = new_ResponseHeader(0,0,0,requestHeader->connection);
+        response = new_Response(responseStatusLine,responseHeader,0);
+    }
+    else{
+        ResponseHeader* responseHeader = new_ResponseHeader(0,0,0,0);
+        response = new_Response(responseStatusLine,responseHeader,0);
+    }
+
+
+    char* res = generateResponseStr(response,length);
+    free_Response(response);
+
+    return res;
 
 }
 
@@ -255,7 +270,7 @@ char* generateFullFileUpLoadResponseWithParseBody(char* path,char* content,char*
 
         if(status){
 
-            return onBoundaryParseError();
+            return onBoundaryParseError(requestHeader,responseLength);
         }
         FILE* file = openFileWithCustomedPath(fileName,"wb");
 
@@ -424,8 +439,81 @@ void doChunkedFileDownLoadResponse(char* filePath,Rio *rio,request_head* request
 
 }
 
+static uint32_t multiply(uint32_t base,uint32_t exp){
 
-void doChunkedFileUpLoadResponseWithParseBody(char* filePath,int32_t socketNum,request_head* requestHeader){
+    uint32_t res = 1;
+    for(uint32_t i = 0; i < exp; ++i){
+
+        res *= base;
+    }
+
+    return res;
+
+}
+static uint32_t charToTen(char ch){
+
+    if(ch >= '0' && ch <= '9'){
+
+        return ch - '0';
+    }
+    else if(ch >= 'a' && ch <= 'f'){
+
+        return ch - 'a' + 10;
+    }
+    else if(ch >= 'A' && ch <= 'F'){
+
+        return ch - 'A' + 10;
+    }
+    else{
+
+        return -1;
+    }
+
+}
+static uint32_t parseHexLength(char* str){
+
+    uint32_t res = 0;
+    int length = 0;
+    for(;str[length] != 0; ++length);
+
+    for(int i = length - 1; i >= 0; --i){
+
+        if((str[i] >= '0' && str[i] <= '9')|| (str[i] >= 'a' && str[i] <= 'f') || (str[i] >= 'A' && str[i] <= 'F')){
+
+            res += charToTen(str[i])*multiply(16,length-i-1);
+        }
+        else{
+
+            return -1;
+        }
+    }
+
+    return res;
+
+}
+
+static char* onFileLengthParseError(request_head* requestHeader,uint32_t* length){
+
+    ResponseStatusLine* responseStatusLine = new_ResponseStatusLine(HTTP_VERSION1_1,BAD_REQUEST_CODE);
+    Response* response = 0;
+    if(requestHeader != 0 && requestHeader->connection != 0){
+
+        ResponseHeader* responseHeader = new_ResponseHeader(0,0,0,requestHeader->connection);
+        response = new_Response(responseStatusLine,responseHeader,0);
+    }
+    else{
+        ResponseHeader* responseHeader = new_ResponseHeader(0,0,0,0);
+        response = new_Response(responseStatusLine,responseHeader,0);
+    }
+
+
+    char* res = generateResponseStr(response,length);
+    free_Response(response);
+
+    return res;
+
+}
+void doChunkedFileUpLoadResponseWithParseBody(char* filePath,Rio* rio,request_head* requestHeader){
 
     uint32_t size = 0;
     FILE* file = openFileWithCustomedPath(filePath,"wb");
@@ -433,38 +521,68 @@ void doChunkedFileUpLoadResponseWithParseBody(char* filePath,int32_t socketNum,r
 
         uint32_t length = 0;
         char* res = onFileNotFound(requestHeader,&length);
-        send(socketNum,res,length,0);
+        rio->writen(rio,res,length);
         free(res);
         return;
     }
-    char temp[size+1];
-    FILE* socketFile = fdopen(socketNum,"rb");
+
+
     while(1){
 
-        fscanf(socketFile,"%x\r\n",&size);
-        if(size == 0){
+        char temp[1024];
+        rio->readline(rio,temp,1024);
+        uint32_t fileLength = parseHexLength(temp);
+        if(fileLength == -1){
+            uint32_t  length = 0;
+            char* res = onFileLengthParseError(requestHeader,&length);
+            rio->writen(rio,res,length);
+            free(res);
+            fclose(file);
+            return;
+        }
+        if(fileLength == 0){
 
             break;
         }
 
-        uint32_t length = fread(temp, sizeof(char),size,socketFile);
-        fgetc(socketFile);
-        fgetc(socketFile);
+        char buffer[fileLength+1];
+        uint32_t realLength = rio->readn(rio,buffer,fileLength);
+        if(realLength != fileLength){
 
-        fwrite(temp, sizeof(char),length,file);
-        if(ferror(file)){
-
-            uint32_t lengthTemp = 0;
-            char* res = onInternalServerError(requestHeader,&lengthTemp);
-            send(socketNum,res,lengthTemp,0);
+            uint32_t  length = 0;
+            char* res = onFileLengthParseError(requestHeader,&length);
+            rio->writen(rio,res,length);
             free(res);
             fclose(file);
             return;
 
         }
+        char qtemp1[10];
+        char qtemp2[10];
 
+        if(rio->readn(rio,qtemp1,1) != 1 || rio->readn(rio,qtemp2,1) != 1 || qtemp1[0] !='\r' || qtemp2[0] != '\n'){
+
+            uint32_t  length = 0;
+            char* res = onFileLengthParseError(requestHeader,&length);
+            rio->writen(rio,res,length);
+            free(res);
+            fclose(file);
+            return;
+        }
+
+        fwrite(buffer, sizeof(char),realLength,file);
+        if(ferror(file)){
+
+            uint32_t lengthTemp = 0;
+            char* res = onInternalServerError(requestHeader,&lengthTemp);
+            rio->writen(rio,res,lengthTemp);
+            free(res);
+            fclose(file);
+            return;
+        }
 
     }
+
 
     ResponseStatusLine* responseStatusLine = new_ResponseStatusLine(HTTP_VERSION1_1,OK_CODE);
     ResponseHeader* responseHeader;
@@ -479,7 +597,7 @@ void doChunkedFileUpLoadResponseWithParseBody(char* filePath,int32_t socketNum,r
     Response* response = new_Response(responseStatusLine,responseHeader,0);
     uint32_t length = 0;
     char* res = generateResponseStr(response,&length);
-    send(socketNum,res,length,0);
+    rio->writen(rio,res,length);
     free(res);
     free_Response(response);
     fclose(file);

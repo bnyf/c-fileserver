@@ -18,7 +18,7 @@ char* generateFullFileUpLoadResponse(char* filePath,char* content,request_head* 
 
 void doChunkedFileDownLoadResponse(char* filePath,Rio *rio,request_head* requestHeader);
 
-void doChunkedFileUpLoadResponseWithParseBody(char* filePath,int32_t socketNum,request_head* requestHeader);
+void doChunkedFileUpLoadResponseWithParseBody(char* filePath,Rio* rio,request_head* requestHeader);
 
 //int32_t doChunkedFileUpLoadResponse(char* filePath,char* content);
 
