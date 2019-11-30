@@ -15,9 +15,7 @@ static ssize_t Rio_read(Rio *rp, char *usrbuf, size_t n) {
     size_t copyCnt;
 
     while(rp->rioCnt <= 0) {
-//        printf("begin read: %d\n",rp ->rioCnt);
         readCnt = read(rp->rioFd, rp->rioBuf, sizeof(rp->rioBuf));
-//        printf("end read: %d\n",readCnt);
         if(readCnt < 0) {
             if(errno != EINTR)
                 return -1;
@@ -63,7 +61,6 @@ ssize_t Rio_readn(Rio *rp, void *usrbuf, size_t n) {
             break;
         }
         else{
-//            printf("readn: %d\n",readCnt);
             leftCnt -= readCnt;
             bufp += readCnt;
         }
@@ -121,14 +118,18 @@ ssize_t Rio_writen(Rio *rp, void *usrbuf, size_t n) {
     char *bufp = (char *)usrbuf;
 
     while(leftCnt > 0) {
-        if((writeCnt = write(rp->rioFd, bufp, leftCnt)) <= 0) {
+        if((writeCnt = write(rp->rioFd, bufp, leftCnt)) < 0) {
             if(errno == EINTR)
                 writeCnt = 0;
             else
                 return -1;
         }
-        bufp += writeCnt;
-        leftCnt -= writeCnt;
+        else if(writeCnt == 0)
+            break;
+        else{
+            bufp += writeCnt;
+            leftCnt -= writeCnt;
+        }
     }
 
     return n;
