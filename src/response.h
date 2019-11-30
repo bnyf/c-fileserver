@@ -40,6 +40,8 @@ extern const char* ACCEPT_RANGES_VALUES_BYTES;
 extern const char* TRANSFER_ENCODING_KEY;
 extern const char* TRANSFER_ENCODING_VALUE_CHUNKED;
 
+extern const char* CONNECTION_KEY;
+
 typedef struct ResponseStatusLine{
 
     const char* version;
@@ -59,11 +61,13 @@ typedef struct ResponseHeader{
     uint32_t Content_Length;
     const char* Accept_Ranges;
     const char* Transfer_Encoding;
+    const char* Connection;
 
 }ResponseHeader;
-void init_ResponseHeader(ResponseHeader* responseHeader,const char* Content_Type,uint32_t Content_Length,const char* Accept_Ranges);
-ResponseHeader* new_ResponseHeader(const char* Content_Type,uint32_t Content_Length,const char* Accept_Ranges);
-ResponseHeader* new_ResponseHeader1(const char* Content_Type,const char* Transfer_Encoding);
+void init_ResponseHeader(ResponseHeader* responseHeader,const char* Content_Type,uint32_t Content_Length,const char* Accept_Ranges,const char* Transfer_Encoding,const char* Connection);
+ResponseHeader* new_ResponseHeader(const char* Content_Type,uint32_t Content_Length,const char* Accept_Ranges,const char* Connection);
+ResponseHeader* new_ResponseHeader1(const char* Content_Type,const char* Transfer_Encoding,const char* Connection);
+ResponseHeader* new_onErrorHeader(const char* Connection);
 char* generateResponseHeaderStr(ResponseHeader* responseHeader);
 void free_ResponseHeader(ResponseHeader* responseHeader);
 

@@ -13,7 +13,7 @@
 const uint32_t CHUNKED_PART_SIZE = 1024;
 
 const uint32_t RESPONSE_STATUS_LINE_STR_SIZE = 60;
-const uint32_t RESPONSE_HEADER_STR_SIZE = 100;
+const uint32_t RESPONSE_HEADER_STR_SIZE = 150;
 
 const char* HTTP_VERSION1_1 = "1.1";
 const char* HTTP_VERSION1_0 = "1.0";
@@ -42,6 +42,7 @@ const char* ACCEPT_RANGES_VALUES_BYTES = "bytes";
 const char* TRANSFER_ENCODING_KEY = "Transfer-Encoding:";
 const char* TRANSFER_ENCODING_VALUE_CHUNKED = "chunked";
 
+const char* CONNECTION_KEY = "Connection:";
 
 static void intToStr(char* buffer,int32_t num){
 
@@ -73,6 +74,10 @@ ResponseStatusLine* new_ResponseStatusLine(const char* version,uint32_t statusCo
 
 char* generateStatusLineStr(ResponseStatusLine* responseStatusLine){
 
+    if(responseStatusLine == 0){
+
+        return 0;
+    }
     char* statusLine = malloc(sizeof(char)*(RESPONSE_STATUS_LINE_STR_SIZE+1));
     statusLine[0] = 0;
     strcat(statusLine,"HTTP/");
@@ -117,6 +122,10 @@ const char* getStatusWord(uint32_t statusCode){
 
 void free_ResponseStatusLine(ResponseStatusLine* responseStatusLine){
 
+    if(responseStatusLine == 0){
+
+        return;
+    }
     free(responseStatusLine);
 
 }
@@ -133,38 +142,55 @@ static void zero_ResponseHeader(ResponseHeader* responseHeader){
 
 }
 
-void init_ResponseHeader(ResponseHeader* responseHeader,const char* Content_Type,uint32_t Content_Length,const char* Accept_Ranges){
+void init_ResponseHeader(ResponseHeader* responseHeader,const char* Content_Type,uint32_t Content_Length,const char* Accept_Ranges,const char* Transfer_Encoding,const char* Connection){
 
     zero_ResponseHeader(responseHeader);
     responseHeader->Content_Type = Content_Type;
     responseHeader->Content_Length = Content_Length;
     responseHeader->Accept_Ranges = Accept_Ranges;
+    responseHeader->Transfer_Encoding = Transfer_Encoding;
+    responseHeader->Connection = Connection;
 
 }
 
-ResponseHeader* new_ResponseHeader(const char* Content_Type,uint32_t Content_Length,const char* Accept_Ranges){
+ResponseHeader* new_ResponseHeader(const char* Content_Type,uint32_t Content_Length,const char* Accept_Ranges,const char* Connection){
 
     ResponseHeader* responseHeader = malloc(sizeof(ResponseHeader));
     zero_ResponseHeader(responseHeader);
     responseHeader->Content_Type = Content_Type;
     responseHeader->Content_Length = Content_Length;
     responseHeader->Accept_Ranges = Accept_Ranges;
+    responseHeader->Connection = Connection;
     return responseHeader;
 
 }
-ResponseHeader* new_ResponseHeader1(const char* Content_Type,const char* Transfer_Encoding){
+ResponseHeader* new_ResponseHeader1(const char* Content_Type,const char* Transfer_Encoding,const char* Connection){
 
     ResponseHeader* responseHeader = malloc(sizeof(ResponseHeader));
     zero_ResponseHeader(responseHeader);
     responseHeader->Content_Type = Content_Type;
     responseHeader->Transfer_Encoding = Transfer_Encoding;
+    responseHeader->Connection = Connection;
+
+    return responseHeader;
+
+}
+ResponseHeader* new_onErrorHeader(const char* Connection){
+
+    ResponseHeader* responseHeader = malloc(sizeof(ResponseHeader));
+    zero_ResponseHeader(responseHeader);
+    responseHeader->Connection = Connection;
+
     return responseHeader;
 
 }
 
-
 char* generateResponseHeaderStr(ResponseHeader* responseHeader){
 
+    if(responseHeader == 0){
+
+        return 0;
+    }
     char* headerStr = malloc(sizeof(char)*(RESPONSE_HEADER_STR_SIZE+1));
     headerStr[0] = 0;
     if(responseHeader->Content_Type){
@@ -198,6 +224,12 @@ char* generateResponseHeaderStr(ResponseHeader* responseHeader){
         strcat(headerStr,responseHeader->Transfer_Encoding);
         strcat(headerStr,"\r\n");
     }
+    if(responseHeader->Connection){
+
+        strcat(headerStr,CONNECTION_KEY);
+        strcat(headerStr,responseHeader->Connection);
+        strcat(headerStr,"\r\n");
+    }
     strcat(headerStr,"\r\n");
     return headerStr;
 
@@ -205,6 +237,10 @@ char* generateResponseHeaderStr(ResponseHeader* responseHeader){
 
 void free_ResponseHeader(ResponseHeader* responseHeader){
 
+    if(responseHeader == 0){
+
+        return;
+    }
     free(responseHeader);
 
 }
@@ -226,13 +262,26 @@ ResponseBody* new_ResponseBody(char* content){
 
 char* generateResponseBodyStr(ResponseBody* responseBody){
 
+    if(responseBody == 0){
+
+        return 0;
+    }
     return responseBody->content;
 
 }
 
 void free_ResponseBody(ResponseBody* responseBody){
 
-    free(responseBody->content);
+    if(responseBody == 0){
+
+        return;
+    }
+
+    if(responseBody -> content != 0){
+
+        free(responseBody->content);
+    }
+
     free(responseBody);
 }
 
@@ -258,17 +307,49 @@ Response* new_Response(ResponseStatusLine* statusLine,ResponseHeader* responseHe
 
 char* generateResponseStr(Response* response){
 
-    char* statusLineStr = generateStatusLineStr(response->statusLine);
-    char* responseHeaderStr = generateResponseHeaderStr(response->responseHeader);
-    char* responseBodyStr = generateResponseBodyStr(response->responseBody);
+    if(response == 0){
+
+        return 0;
+    }
+    char* statusLineStr = 0;
+    char* responseHeaderStr = 0;
+    char* responseBodyStr = 0;
+
+    if(response->statusLine != 0){
+
+        statusLineStr = generateStatusLineStr(response->statusLine);
+    }
+    if(response->responseHeader != 0){
+
+        responseHeaderStr = generateResponseHeaderStr(response->responseHeader);
+    }
+    if(response->responseBody != 0){
+
+        responseBodyStr = generateResponseBodyStr(response->responseBody);
+    }
+
 
     uint32_t  bodyLength = strlen(responseBodyStr);
     uint32_t length = RESPONSE_STATUS_LINE_STR_SIZE + RESPONSE_HEADER_STR_SIZE + bodyLength + 1;
     char* res = malloc(sizeof(char)*length);
     res[0] = 0;
-    strcat(res,statusLineStr);
-    strcat(res,responseHeaderStr);
-    strcat(res,responseBodyStr);
+
+    if(statusLineStr != 0){
+
+        strcat(res,statusLineStr);
+    }
+    if(responseHeaderStr != 0){
+
+        strcat(res,responseHeaderStr);
+    }
+    if(statusLineStr != 0 && responseHeaderStr == 0){
+
+        strcat(res,"\r\n");
+    }
+    if(responseBodyStr != 0){
+
+        strcat(res,responseBodyStr);
+    }
     free(statusLineStr);
     free(responseHeaderStr);
 
@@ -278,9 +359,23 @@ char* generateResponseStr(Response* response){
 
 void free_Response(Response* response){
 
-    free_ResponseStatusLine(response->statusLine);
-    free_ResponseHeader(response->responseHeader);
-    free_ResponseBody(response->responseBody);
+    if(response == 0){
+
+        return;
+    }
+    if(response->statusLine != 0){
+
+        free_ResponseStatusLine(response->statusLine);
+    }
+    if(response->responseHeader != 0){
+
+        free_ResponseHeader(response->responseHeader);
+    }
+    if(response->responseBody != 0){
+
+        free_ResponseBody(response->responseBody);
+    }
+
     free(response);
 
 

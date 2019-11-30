@@ -6,25 +6,27 @@
 #define FILEUPANDDOWN_FILEPRESENTER_H
 
 #include <stdint.h>
+#include "http.h"
 
 
 
+char* generateFullFileDownLoadResponse(char* filePath,request_head* requestHeader);
 
-char* generateFullFileDownLoadResponse(char* filePath);
+char* generateFullFileUpLoadResponseWithParseBody(char* filePath,char* content,char* boundary,request_head* requestHeader);
 
-char* generateFullFileUpLoadResponseWithParseBody(char* filePath,char* content,char* boundary);
+char* generateFullFileUpLoadResponse(char* filePath,char* content,request_head* requestHeader);
 
-char* generateFullFileUpLoadResponse(char* filePath,char* content);
+void doChunkedFileDownLoadResponse(char* filePath,int32_t socketNum,request_head* requestHeader);
 
-void doChunkedFileDownLoadResponse(char* filePath,int32_t socketNum);
+void doChunkedFileUpLoadResponseWithParseBody(char* filePath,int32_t socketNum,request_head* requestHeader);
 
-void doChunkedFileUpLoadResponseWithParseBody(char* filePath,int32_t socketNum);
+//int32_t doChunkedFileUpLoadResponse(char* filePath,char* content);
 
-void doChunkedFileUpLoadResponse(char* filePath,char* content);
 
-char* generateRangeFileDownLoadResponse(char* filePath,uint32_t start,uint32_t end);
+//currently unused
+char* generateRangeFileDownLoadResponse(char* filePath,uint32_t start,uint32_t end,request_head* requestHeader);
 
-char* generateRangeFileUpLoadResponse(char* filePath,char* content,char* boundary,uint32_t start,uint32_t end);
+char* generateRangeFileUpLoadResponse(char* filePath,char* content,char* boundary,uint32_t start,uint32_t end,request_head* requestHeader);
 
 
 
