@@ -244,7 +244,7 @@ uint32_t do_get(request_message *req, Rio *rio, int *statue_code) {
     //解析URL
     url_data_t *url_info = NULL;
     url_info = url_parse(req->rl->url);
-    //url_data_inspect(url_info);
+//    url_data_inspect(url_info);
     char *filepath = url_info->pathname;
     printf("filepath:%s\n", filepath);
     /*将文件解析地址传入处理函数,需要配合响应函数写*/
