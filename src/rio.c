@@ -142,11 +142,13 @@ ssize_t Rio_writen(Rio *rp, void *usrbuf, size_t n) {
  * @param rp        io结构体
  * @param fd        文件描述符
  */
-Rio* newRio(int fd) {
+Rio* newRio(int fd, struct event* ev) {
     Rio* rio = malloc(sizeof(Rio));
     rio->rioFd = fd;
     rio->rioCnt = 0;
     rio->rioBufptr = rio->rioBuf;
+    rio->ev = ev;
+
     rio->readn = Rio_readn;
     rio->readline = Rio_readline;
     rio->writen = Rio_writen;
@@ -155,6 +157,8 @@ Rio* newRio(int fd) {
 }
 
 void freeRio(Rio *rp) {
+    event_free(rp -> ev);
     free(rp);
+
     close(rp->rioFd);
 }

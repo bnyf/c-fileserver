@@ -12,6 +12,7 @@
 #define __LINEMAXNUM__ 20
 #define __ERROR__ 0
 #define __OK__ 1
+#define  __CLOSED__ 2
 //定义状态码
 #define __NORMAL__ 200
 #define __REQUEST_ERROR__ 400
@@ -143,7 +144,7 @@ typedef struct {
 
 //-----------------------------------------------------------------------------------
 /*从tcp读取http流*/
-uint32_t read_http(int fd, int *statue_code);
+uint32_t read_http(Rio *rio, int *statue_code);
 
 /*将字符流转化为标准http报文*/
 request_message pre_Process(char *message, int *error);
