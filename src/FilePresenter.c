@@ -467,7 +467,7 @@ char* generateFullFileUpLoadResponse(char* filePath,char* content,request_head* 
 
     if(doFileUpLoad(filePath,content)){
 
-        return onInternalServerError();
+        return onInternalServerError(requestHeader);
     }
     else{
 
