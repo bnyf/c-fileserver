@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include "tools.h"
 
 /**
@@ -55,4 +56,9 @@ int split_str(char *src, const char *separator, char **dest)
       pNext = strstr(pNext+len, separator);
    }
    return count;
+}
+
+int strtoInt(char *str)
+{
+    return atoi(str);
 }
