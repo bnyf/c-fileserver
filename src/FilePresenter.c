@@ -106,9 +106,35 @@ char* generateFullFileDownLoadResponse(char* filePath,request_head* requestHeade
 
 }
 
+static char* findStr(char* str1,const char* str2,uint32_t bodyLength){
+
+    for(uint32_t i = 0; i < bodyLength; ++i){
+
+        uint32_t temp = i;
+        uint32_t temp1 = i;
+        uint32_t j = 0;
+        for(; str2[j] != 0; ++j){
+
+            if(str1[temp] != str2[j]){
+
+                break;
+            }
+            ++temp;
+
+        }
+        if(str2[j] == 0){
+
+            return &str1[temp1];
+        }
+
+    }
+
+    return 0;
+
+}
 
 static int32_t getBoundary(char** contentPtr,char* start_template,char* end_template,int start_template_length,int end_template_length,
-        char** fileName,char** fileContent,uint32_t* fileContentLength,int32_t* status){
+        char** fileName,char** fileContent,uint32_t* fileContentLength,int32_t* status,uint32_t bodyLength,const char* startPtr){
 
     *status = 0;
     char* content = *contentPtr;
@@ -117,9 +143,9 @@ static int32_t getBoundary(char** contentPtr,char* start_template,char* end_temp
         return 0;
     }
 
-    char* startIndex = strstr(content,start_template);
-    char* endIndex = strstr(content,end_template);
-    uint32_t contentLength = strlen(content);
+    char* startIndex = findStr(content,start_template,bodyLength);
+    char* endIndex = findStr(content,end_template,bodyLength);
+    uint32_t contentLength = bodyLength - (content - startPtr);
     if(contentLength == 0){
 
         return 0;
@@ -143,14 +169,14 @@ static int32_t getBoundary(char** contentPtr,char* start_template,char* end_temp
 
     startIndex += sizeof(char)*(start_template_length+2);
 
-    char* temp = strstr(startIndex,"\r\n\r\n");
+    char* temp = findStr(startIndex,"\r\n\r\n",bodyLength);
     if(temp == 0){
 
         *status = 1;
         return 1;
     }
     temp += sizeof(char)*4;
-    char* temp2 = strstr(temp,start_template);
+    char* temp2 = findStr(temp,start_template,bodyLength);
     if(temp2 == endIndex){
 
         *(endIndex-2* sizeof(char)) = 0;
@@ -166,7 +192,7 @@ static int32_t getBoundary(char** contentPtr,char* start_template,char* end_temp
     }
     *fileContent = temp;
 
-    char* temp1 = strstr(startIndex,"filename");
+    char* temp1 = findStr(startIndex,"filename",bodyLength);
     if(temp1 == 0){
 
         *status = 1;
@@ -178,7 +204,7 @@ static int32_t getBoundary(char** contentPtr,char* start_template,char* end_temp
         *status = 1;
         return 1;
     }
-    char* temp3 = strstr(temp1,"\"");
+    char* temp3 = findStr(temp1,"\"",bodyLength);
     if(temp3 == 0){
 
         *status = 1;
@@ -224,7 +250,8 @@ char* generateFullFileUpLoadResponseWithParseBody(char* path,char* content,char*
     char* fileContent;
     uint32_t fileContentLength;
     int32_t status;
-    while(getBoundary(&content,start_template,end_template,start_template_length,end_template_length,&fileName,&fileContent,&fileContentLength,&status)){
+    while(getBoundary(&content,start_template,end_template,start_template_length,end_template_length,&fileName,&fileContent,&fileContentLength,&status,
+            requestHeader->content_length,content)){
 
         if(status){
 
