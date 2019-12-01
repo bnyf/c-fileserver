@@ -5,21 +5,22 @@ set(CMAKE_CXX_STANDARD 14)
 
 include_directories(src)
 
+#libevent
 set(INC_DIR /usr/local/libevent/include)
 set(LINK_DIR /usr/local/libevent/lib)
-
 include_directories(${INC_DIR})
 link_directories(${LINK_DIR})
 link_libraries(libevent.a)
+#libevnet
 
 #openssl
 set(INC_DIR_openssl /usr/local/opt/openssl@1.1/include)
 set(LINK_DIR_openssl /usr/local/opt/openssl@1.1/lib)
-
 include_directories(${INC_DIR_openssl})
 link_directories(${LINK_DIR_openssl})
 link_libraries(ssl.a)
 link_libraries(crypto.a)
+#openssl
 
 add_executable(c_fileserver
         src/http.c
