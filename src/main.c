@@ -1,19 +1,10 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/socket.h>
-#include <arpa/inet.h> //inet_addr()
-#include <unistd.h>
 #include <event2/event.h>
 
 #include "server.h"
-#include "rio.h"
 
 int main(int argc, char* argv[]) {
 
-	struct sockaddr_in client;
-	socklen_t new_socket_len;
-	int listener, new_socket;
+	int listener;
 
     listener = server_init();
 

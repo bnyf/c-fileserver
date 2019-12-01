@@ -15,9 +15,10 @@ static ssize_t Rio_read(Rio *rp, char *usrbuf, size_t n) {
     size_t copyCnt;
 
     while(rp->rioCnt <= 0) {
-        readCnt = read(rp->rioFd, rp->rioBuf, sizeof(rp->rioBuf));
+        readCnt = SSL_read(rp->ssl, rp->rioBuf, sizeof(rp->rioBuf));
+        int nRes = SSL_get_error(rp->ssl, readCnt);
         if(readCnt < 0) {
-            if(errno != EINTR && errno != EAGAIN)
+            if(errno != EINTR && errno != EAGAIN && nRes != SSL_ERROR_WANT_READ)
                 return -1;
         }
         else if(readCnt == 0)   //socket 关闭
@@ -118,8 +119,9 @@ ssize_t Rio_writen(Rio *rp, void *usrbuf, size_t n) {
     char *bufp = (char *)usrbuf;
 
     while(leftCnt > 0) {
-        if((writeCnt = write(rp->rioFd, bufp, leftCnt)) < 0) {
-            if(errno != EINTR && errno != EAGAIN)
+        if((writeCnt = SSL_write(rp->ssl, bufp, leftCnt)) < 0) {
+            int nRes = SSL_get_error(rp->ssl, writeCnt);
+            if(errno != EINTR && errno != EAGAIN  && nRes != SSL_ERROR_WANT_READ)
                 return -1;
         }
         else if(writeCnt == 0)
@@ -140,12 +142,14 @@ ssize_t Rio_writen(Rio *rp, void *usrbuf, size_t n) {
  * @param rp        io结构体
  * @param fd        文件描述符
  */
-Rio* newRio(int fd, struct event* ev) {
+Rio* newRio(int fd, struct event* ev,  SSL_CTX *ctx, SSL *ssl) {
     Rio* rio = malloc(sizeof(Rio));
     rio->rioFd = fd;
     rio->rioCnt = 0;
     rio->rioBufptr = rio->rioBuf;
     rio->ev = ev;
+    rio->ctx = ctx;
+    rio->ssl = ssl;
 
     rio->readn = Rio_readn;
     rio->readline = Rio_readline;
@@ -156,7 +160,9 @@ Rio* newRio(int fd, struct event* ev) {
 
 void freeRio(Rio *rp) {
     event_free(rp -> ev);
-    free(rp);
-
+    SSL_free (rp->ssl);
+    SSL_CTX_free (rp->ctx);
     close(rp->rioFd);
+
+    free(rp);
 }

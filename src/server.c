@@ -45,10 +45,10 @@ int server_init() {
 void accept_cb(int fd, short events, void *arg) {
     evutil_socket_t sockfd;
 
-    struct sockaddr_in client;
-    socklen_t len = sizeof(client);
+    SSL_CTX *ctx = NULL;
+    SSL *ssl = NULL;
 
-    sockfd = accept(fd, (struct sockaddr *) &client, &len);
+    sockfd = create_ssl(&ctx,&ssl,fd);
     evutil_make_socket_nonblocking(sockfd);
 
     printf("accept a client %d\n", sockfd);
@@ -58,20 +58,17 @@ void accept_cb(int fd, short events, void *arg) {
     //动态创建一个event结构体，并将其作为回调参数传递给
     struct event *ev = event_new(NULL, -1, 0, NULL, NULL);
 
-    Rio *rio = newRio(sockfd, ev);
+    Rio *rio = newRio(sockfd, ev, ctx, ssl);
     event_assign(ev, base, sockfd, EV_READ | EV_PERSIST, socket_read_cb, (void *) rio);
 
     event_add(ev, NULL);
 }
 
 void socket_read_cb(int fd, short events, void *arg) {
-//    struct event* ev = (struct event*)arg;
     Rio *rio = (Rio *) arg;
 
     uint32_t statue_code;
     if (read_http(rio, &statue_code) != 1) {
         freeRio(rio);
     }
-
-
 }

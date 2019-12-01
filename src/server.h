@@ -10,6 +10,7 @@
 
 #include "get_ip.h"
 #include "http.h"
+#include "ssl.h"
 
 int server_init();
 void accept_cb(int fd, short events, void* arg);
