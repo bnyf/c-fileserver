@@ -11,9 +11,9 @@
 
 int main(int argc, char* argv[]) {
 
-	struct sockaddr_in client;
-	socklen_t new_socket_len;
-	int listener, new_socket;
+	int listener;
+
+    signal(SIGPIPE, SIG_IGN);
 
     listener = server_init();
 
