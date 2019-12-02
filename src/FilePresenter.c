@@ -338,7 +338,7 @@ static void generateChunkedPart(char* buffer,uint32_t chunkedSize,const char* ch
 
 }
 
-void doChunkedFileDownLoadResponse(char* filePath,Rio *rio,request_head* requestHeader){
+int32_t doChunkedFileDownLoadResponse(char* filePath,Rio *rio,request_head* requestHeader){
 
     FILE* file = openFileWithCustomedPath(filePath,"rb");
     if(file == 0){
@@ -347,7 +347,7 @@ void doChunkedFileDownLoadResponse(char* filePath,Rio *rio,request_head* request
         char* res = onFileNotFound(requestHeader,&length);
         rio->writen(rio,res,length);
         free(res);
-        return;
+        return __ERROR__;
 
     }
 
@@ -363,7 +363,7 @@ void doChunkedFileDownLoadResponse(char* filePath,Rio *rio,request_head* request
         rio->writen(rio,res,length);
         free(res);
         fclose(file);
-        return;
+        return __ERROR__;
     }
     temp[size] = 0;
 
@@ -403,7 +403,7 @@ void doChunkedFileDownLoadResponse(char* filePath,Rio *rio,request_head* request
     if(feof(file)){
 
         fclose(file);
-        return;
+        return __OK__;
     }
 
     while(1){
@@ -417,7 +417,7 @@ void doChunkedFileDownLoadResponse(char* filePath,Rio *rio,request_head* request
 
             free(res);
             fclose(file);
-            return;
+            return __ERROR__;
         }
         temp[size] = 0;
         if(feof(file)){
@@ -426,7 +426,7 @@ void doChunkedFileDownLoadResponse(char* filePath,Rio *rio,request_head* request
             generateChunkedPart(buffer,size,temp,1,&lengthTemp);
             rio->writen(rio,buffer,lengthTemp);
             fclose(file);
-            return;
+            return __OK__;
         }
         else{
 
@@ -518,7 +518,7 @@ static char* onFileLengthParseError(request_head* requestHeader,uint32_t* length
     return res;
 
 }
-void doChunkedFileUpLoadResponseWithParseBody(char* filePath,Rio* rio,request_head* requestHeader){
+int32_t doChunkedFileUpLoadResponseWithParseBody(char* filePath,Rio* rio,request_head* requestHeader){
 
     uint32_t size = 0;
     FILE* file = openFileWithCustomedPath(filePath,"wb");
@@ -528,7 +528,7 @@ void doChunkedFileUpLoadResponseWithParseBody(char* filePath,Rio* rio,request_he
         char* res = onFileNotFound(requestHeader,&length);
         rio->writen(rio,res,length);
         free(res);
-        return;
+        return __ERROR__;
     }
 
 
@@ -543,7 +543,7 @@ void doChunkedFileUpLoadResponseWithParseBody(char* filePath,Rio* rio,request_he
             rio->writen(rio,res,length);
             free(res);
             fclose(file);
-            return;
+            return __ERROR__;
         }
         if(fileLength == 0){
 
@@ -559,7 +559,7 @@ void doChunkedFileUpLoadResponseWithParseBody(char* filePath,Rio* rio,request_he
             rio->writen(rio,res,length);
             free(res);
             fclose(file);
-            return;
+            return __ERROR__;
 
         }
         char qtemp1[10];
@@ -572,7 +572,7 @@ void doChunkedFileUpLoadResponseWithParseBody(char* filePath,Rio* rio,request_he
             rio->writen(rio,res,length);
             free(res);
             fclose(file);
-            return;
+            return __ERROR__;
         }
 
         fwrite(buffer, sizeof(char),realLength,file);
@@ -583,7 +583,7 @@ void doChunkedFileUpLoadResponseWithParseBody(char* filePath,Rio* rio,request_he
             rio->writen(rio,res,lengthTemp);
             free(res);
             fclose(file);
-            return;
+            return __ERROR__;
         }
 
     }
@@ -606,6 +606,7 @@ void doChunkedFileUpLoadResponseWithParseBody(char* filePath,Rio* rio,request_he
     free(res);
     free_Response(response);
     fclose(file);
+    return __OK__;
 
 }
 
