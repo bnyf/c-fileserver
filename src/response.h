@@ -96,5 +96,7 @@ Response* new_Response(ResponseStatusLine* statusLine,ResponseHeader* responseHe
 char* generateResponseStr(Response* response,uint32_t* responseLength);
 void free_Response(Response* response);
 
+
+char* generateResponseByStatusCode(uint32_t statusCode,uint32_t* length);
 #endif //FILEUPANDDOWN_RESPONSE_H
 

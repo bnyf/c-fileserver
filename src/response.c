@@ -28,6 +28,9 @@ const char* NOT_FOUND_WORD = "Not Found";
 const uint32_t OK_CODE = 200;
 const char* OK_WORD = "OK";
 
+const uint32_t MULTI_CHOICES_CODE = 300;
+const char* MULTI_CHOICES_WORD = "Multiple Choices";
+
 const uint32_t INTERNAL_SERVER_ERROR_CODE = 500;
 const char* INTERNAL_SERVER_ERROR_WORD = "Internal Server Error";
 
@@ -113,6 +116,10 @@ const char* getStatusWord(uint32_t statusCode){
     else if(statusCode == BAD_REQUEST_CODE){
 
         return BAD_REQUEST_WORD;
+    }
+    else if(statusCode == MULTI_CHOICES_CODE){
+
+        return MULTI_CHOICES_WORD;
     }
     else{
 
@@ -402,6 +409,31 @@ void free_Response(Response* response){
 
 
 
+char* generateResponseByStatusCode(uint32_t statusCode,uint32_t* length){
 
+    ResponseStatusLine* responseStatusLine = new_ResponseStatusLine(HTTP_VERSION1_1,statusCode);
+    ResponseHeader* responseHeader;
+    if(statusCode == MULTI_CHOICES_CODE){
+
+        responseHeader = new_ResponseHeader(0,0,0,"close");
+    }
+    else if(statusCode == BAD_REQUEST_CODE || statusCode == INTERNAL_SERVER_ERROR_CODE){
+
+        responseHeader = new_ResponseHeader(0,0,0,"keep-alive");
+    }
+    else{
+        responseHeader = new_ResponseHeader(0,0,0,0);
+    }
+
+    Response* response = new_Response(responseStatusLine,responseHeader,0);
+
+
+    char* res = generateResponseStr(response,length);
+
+    free_Response(response);
+
+    return res;
+
+}
 
 
