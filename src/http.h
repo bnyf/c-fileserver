@@ -13,6 +13,9 @@
 #define __ERROR__ 0
 #define __OK__ 1
 #define  __CLOSED__ 2
+//是否开启分块传输
+#define __ISDOWNCHUNKTRANSPORT__ 1
+#define __ISUOLODECHUNKTRANSPORT__ 0
 //定义状态码
 #define __NORMAL__ 200
 #define __REQUEST_ERROR__ 400

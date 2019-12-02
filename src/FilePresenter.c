@@ -428,7 +428,6 @@ void doChunkedFileDownLoadResponse(char* filePath,Rio *rio,request_head* request
             generateChunkedPart(buffer,size,temp,0,&lengthTemp);
             rio->writen(rio,buffer,lengthTemp);
 
-
         }
 
 

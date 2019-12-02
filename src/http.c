@@ -241,16 +241,24 @@ uint32_t do_get(request_message *req, Rio *rio, uint32_t *statue_code) {
     char *filepath = url_info->pathname;
     printf("filepath:%s\n", filepath);
     /*将文件解析地址传入处理函数,需要配合响应函数写*/
-    uint32_t res_length = 0;
-    char *res_seq = generateFullFileDownLoadResponse(filepath, req->rh, &res_length);
-    printf("res_seq:%s\n", res_seq);
-    uint32_t res = send_Message(rio, statue_code, res_seq, res_length);
-    free(res_seq);
-    //判断返回值
-    if (!res) {
-        *statue_code = __INTERNAL_SERVER_ERROR__;
-        return __ERROR__;
+    uint32_t res;
+
+    if (!__ISDOWNCHUNKTRANSPORT__) {
+        uint32_t res_length = 0;
+        char *res_seq = generateFullFileDownLoadResponse(filepath, req->rh, &res_length);
+        printf("res_seq:%s\n", res_seq);
+        res = send_Message(rio, statue_code, res_seq, res_length);
+        free(res_seq);
+        //判断返回值
+        if (!res) {
+            *statue_code = __INTERNAL_SERVER_ERROR__;
+            return __ERROR__;
+        }
+    } else {
+        //分块传输
+        doChunkedFileDownLoadResponse(filepath, rio, req->rh);
     }
+
     return __OK__;
 }
 
@@ -282,28 +290,29 @@ uint32_t do_post(request_message *req, Rio *rio, uint32_t *statue_code) {
     char *filepath = url_info->pathname;
     printf("filepath:%s\n", filepath);
 
-    char *res_seq = NULL;
-    uint32_t res_length = 0;
-    if (strstr(req->rh->content_type, "multipart/form-data") != NULL) {
-        //解析content
-        char *boundry = strstr(req->rh->content_type, "=") + 1;
-        printf("Boundry:%s\n", boundry);
-        res_seq = generateFullFileUpLoadResponseWithParseBody(filepath, req->body, boundry, req->rh, &res_length);
-    }
-    else
-    {
-        *statue_code = __INTERNAL_SERVER_ERROR__;
-        return __ERROR__;
-    }
 
-    printf("req_seq:%s\n", res_seq);
-    uint32_t res = send_Message(rio, statue_code, res_seq, res_length);
-    free(res_seq);
-
-    //判断返回值
-    if (!res) {
-        *statue_code = __INTERNAL_SERVER_ERROR__;
-        return __ERROR__;
+    if (!__ISUOLODECHUNKTRANSPORT__) {
+        char *res_seq = NULL;
+        uint32_t res_length = 0;
+        if (strstr(req->rh->content_type, "multipart/form-data") != NULL) {
+            //解析content
+            char *boundry = strstr(req->rh->content_type, "=") + 1;
+            printf("Boundry:%s\n", boundry);
+            res_seq = generateFullFileUpLoadResponseWithParseBody(filepath, req->body, boundry, req->rh, &res_length);
+        } else {
+            res_seq = generateFullFileUpLoadResponse(filepath, req->body, req->rh, &res_length);
+        }
+        printf("req_seq:%s\n", res_seq);
+        uint32_t res = send_Message(rio, statue_code, res_seq, res_length);
+        free(res_seq);
+        //判断返回值
+        if (!res) {
+            *statue_code = __INTERNAL_SERVER_ERROR__;
+            return __ERROR__;
+        }
+    } else {
+        //分块传输
+        doChunkedFileUpLoadResponseWithParseBody(filepath, rio, req->rh);
     }
     return __OK__;
 
