@@ -148,10 +148,10 @@ static void zero_ResponseHeader(ResponseHeader* responseHeader){
     responseHeader->Accept_Ranges = 0;
     responseHeader->Transfer_Encoding = 0;
     responseHeader->Content_Type = 0;
-
+    responseHeader->Connection = 0;
 }
 
-void init_ResponseHeader(ResponseHeader* responseHeader,const char* Content_Type,uint32_t Content_Length,const char* Accept_Ranges,const char* Transfer_Encoding,const char* Connection){
+void init_ResponseHeader(ResponseHeader* responseHeader,const char* Content_Type,int32_t Content_Length,const char* Accept_Ranges,const char* Transfer_Encoding,const char* Connection){
 
     zero_ResponseHeader(responseHeader);
     responseHeader->Content_Type = Content_Type;
@@ -162,7 +162,7 @@ void init_ResponseHeader(ResponseHeader* responseHeader,const char* Content_Type
 
 }
 
-ResponseHeader* new_ResponseHeader(const char* Content_Type,uint32_t Content_Length,const char* Accept_Ranges,const char* Connection){
+ResponseHeader* new_ResponseHeader(const char* Content_Type,int32_t Content_Length,const char* Accept_Ranges,const char* Connection){
 
     ResponseHeader* responseHeader = malloc(sizeof(ResponseHeader));
     zero_ResponseHeader(responseHeader);
