@@ -10,7 +10,7 @@
 
 
 //Common Tool Area
-const uint32_t CHUNKED_PART_SIZE = 1024;
+const uint32_t CHUNKED_PART_SIZE = 1024*128;
 
 const uint32_t RESPONSE_STATUS_LINE_STR_SIZE = 60;
 const uint32_t RESPONSE_HEADER_STR_SIZE = 150;
@@ -137,7 +137,7 @@ void free_ResponseStatusLine(ResponseStatusLine* responseStatusLine){
 
 static void zero_ResponseHeader(ResponseHeader* responseHeader){
 
-    responseHeader->Content_Length = 0;
+    responseHeader->Content_Length = -1;
     responseHeader->Accept_Ranges = 0;
     responseHeader->Transfer_Encoding = 0;
     responseHeader->Content_Type = 0;

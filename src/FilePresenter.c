@@ -306,6 +306,7 @@ char* generateFullFileUpLoadResponseWithParseBody(char* path,char* content,char*
 static void generateChunkedPart(char* buffer,uint32_t chunkedSize,const char* chunkedContent,int32_t whetherEOF,uint32_t* chunkTotalSize){
 
     buffer[0] = 0;
+    *chunkTotalSize = 0;
     if(chunkedSize > 0){
 
         char temp[50];
@@ -326,8 +327,13 @@ static void generateChunkedPart(char* buffer,uint32_t chunkedSize,const char* ch
 
     if(whetherEOF){
 
-        strcat(buffer,"0\r\n");
-        *chunkTotalSize = sizeof(char)*3;
+        uint32_t temp = *chunkTotalSize;
+        buffer[temp] = '0';
+        buffer[temp+1] = '\r';
+        buffer[temp+2] = '\n';
+        buffer[temp+3] = '\r';
+        buffer[temp+4] = '\n';
+        *chunkTotalSize = (*chunkTotalSize) + sizeof(char)*5;
     }
 
 }
