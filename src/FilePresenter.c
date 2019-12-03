@@ -486,17 +486,25 @@ static uint32_t charToTen(char ch){
     }
 
 }
-static uint32_t parseHexLength(char* str){
+static uint32_t parseHexLength(char* arr,int32_t readLength){
+
+    if(readLength < 3){
+
+        return -1;
+    }
+    if(arr[readLength-1] != '\n' || arr[readLength-2] != '\r'){
+
+        return -1;
+    }
 
     uint32_t res = 0;
-    int length = 0;
-    for(;str[length] != 0; ++length);
 
-    for(int i = length - 1; i >= 0; --i){
+    int32_t length = readLength - 2;
+    for(int32_t i = readLength - 3 ; i >= 0; --i){
 
-        if((str[i] >= '0' && str[i] <= '9')|| (str[i] >= 'a' && str[i] <= 'f') || (str[i] >= 'A' && str[i] <= 'F')){
+        if((arr[i] >= '0' && arr[i] <= '9')|| (arr[i] >= 'a' && arr[i] <= 'f') || (arr[i] >= 'A' && arr[i] <= 'F')){
 
-            res += charToTen(str[i])*multiply(16,length-i-1);
+            res += charToTen(arr[i])*multiply(16,length-i-1);
         }
         else{
 
@@ -545,9 +553,14 @@ int32_t doChunkedFileUpLoadResponseWithParseBody(char* filePath,Rio* rio,request
 
     while(1){
 
-        char temp[1024];
-        rio->readline(rio,temp,1024);
-        uint32_t fileLength = parseHexLength(temp);
+        char temp[1026];
+        int32_t readLength = rio->full_readline(rio,temp,1026);
+        if(readLength <= 0){
+
+            fclose(file);
+            return __ERROR__;
+        }
+        uint32_t fileLength = parseHexLength(temp,readLength);
         if(fileLength == -1){
             uint32_t  length = 0;
             char* res = onFileLengthParseError(requestHeader,&length);
@@ -563,6 +576,11 @@ int32_t doChunkedFileUpLoadResponseWithParseBody(char* filePath,Rio* rio,request
 
         char buffer[fileLength+1];
         uint32_t realLength = rio->readn(rio,buffer,fileLength);
+        if(readLength <= 0){
+
+            fclose(file);
+            return __ERROR__;
+        }
         if(realLength != fileLength){
 
             uint32_t  length = 0;
@@ -575,8 +593,20 @@ int32_t doChunkedFileUpLoadResponseWithParseBody(char* filePath,Rio* rio,request
         }
         char qtemp1[10];
         char qtemp2[10];
+        int32_t status1 = rio->readn(rio,qtemp1,1);
+        if(status1 != 1){
 
-        if(rio->readn(rio,qtemp1,1) != 1 || rio->readn(rio,qtemp2,1) != 1 || qtemp1[0] !='\r' || qtemp2[0] != '\n'){
+            fclose(file);
+            return __ERROR__;
+
+        }
+        int32_t status2 = rio->readn(rio,qtemp2,1);
+        if(status2 != 1){
+
+            fclose(file);
+            return __ERROR__;
+        }
+        if(qtemp1[0] != '\r' || qtemp2[0] != '\n'){
 
             uint32_t  length = 0;
             char* res = onFileLengthParseError(requestHeader,&length);
@@ -585,6 +615,15 @@ int32_t doChunkedFileUpLoadResponseWithParseBody(char* filePath,Rio* rio,request
             fclose(file);
             return __ERROR__;
         }
+//        if( status1 != 1 ||  status2 != 1 || qtemp1[0] !='\r' || qtemp2[0] != '\n'){
+//
+//            uint32_t  length = 0;
+//            char* res = onFileLengthParseError(requestHeader,&length);
+//            rio->writen(rio,res,length);
+//            free(res);
+//            fclose(file);
+//            return __ERROR__;
+//        }
 
         fwrite(buffer, sizeof(char),realLength,file);
         if(ferror(file)){
