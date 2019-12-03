@@ -16,7 +16,7 @@ int server_init() {
     //init server
     server.sin_family = AF_INET; //IPv4
     char local_ip[INET_ADDRSTRLEN] = {"127.0.0.1"};
-//    get_ip(local_ip);
+    get_ip(local_ip);
     printf("local ip: %s\n", local_ip);
     server.sin_addr.s_addr = inet_addr(local_ip);
     server.sin_port = htons(8080);

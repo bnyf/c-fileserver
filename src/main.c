@@ -5,7 +5,7 @@
 #include <arpa/inet.h> //inet_addr()
 #include <unistd.h>
 #include <event2/event.h>
-
+#include <signal.h>
 #include "server.h"
 #include "rio.h"
 
