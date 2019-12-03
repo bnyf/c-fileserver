@@ -393,13 +393,18 @@ int32_t doChunkedFileDownLoadResponse(char* filePath,Rio *rio,request_head* requ
     Response* response = new_Response(responseStatusLine,responseHeader,responseBody);
     uint32_t length = 0;
     char* res = generateResponseStr(response,&length);
-    rio->writen(rio,res,length);
+    int32_t status = rio->writen(rio,res,length);
     free_ResponseStatusLine(responseStatusLine);
     free_ResponseHeader(responseHeader);
     free(responseBody);
     free(response);
     free(res);
 
+    if(status == -1){
+
+        fclose(file);
+        return __ERROR__;
+    }
     if(feof(file)){
 
         fclose(file);
@@ -432,7 +437,13 @@ int32_t doChunkedFileDownLoadResponse(char* filePath,Rio *rio,request_head* requ
 
             uint32_t lengthTemp = 0;
             generateChunkedPart(buffer,size,temp,0,&lengthTemp);
-            rio->writen(rio,buffer,lengthTemp);
+            status = rio->writen(rio,buffer,lengthTemp);
+
+            if(status == -1){
+
+                fclose(file);
+                return __ERROR__;
+            }
 
         }
 
