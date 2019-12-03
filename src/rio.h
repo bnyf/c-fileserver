@@ -22,6 +22,7 @@ typedef struct _Rio{
     ssize_t (*readn)(struct _Rio *rp, void *usrbuf, size_t n);
     ssize_t (*readline)(struct _Rio *rp, void *usrbuf, size_t maxlen);
     ssize_t (*writen)(struct _Rio *rp, void *usrbuf, size_t n);
+    ssize_t (*full_readline)(struct _Rio *rp, void *usrbuf, size_t maxlen);
 } Rio;
 
 Rio* newRio(int fd, struct event* ev);

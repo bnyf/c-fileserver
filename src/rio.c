@@ -70,7 +70,7 @@ ssize_t Rio_readn(Rio *rp, void *usrbuf, size_t n) {
 }
 
 /**
- * @brief Rio_readline 读取一行的数据，遇到'\n\r'结尾代表一行。阻塞 io，直到读到'\n\r'。
+ * @brief Rio_readline 读取一行的数据，遇到'\r\n'结尾代表一行。阻塞 io，直到读到'\r\n'。
  *
  * @param rp            rio包
  * @param usrbuf        用户地址，即目的地址
@@ -96,6 +96,38 @@ ssize_t Rio_readline(Rio *rp, void *usrbuf, size_t maxlen) {
         else if(readCnt == 0)        //socket 关闭
             break;
         else                    
+            return -1;
+    }
+    *bufp = 0;
+
+    return totCnt;
+}
+
+/**
+ * @brief Rio_full_readline 读取一行的数据，遇到'\r\n'结尾代表一行。阻塞 io，直到读到'\r\n', 返回带\r\n
+ *
+ * @param rp            rio包
+ * @param usrbuf        用户地址，即目的地址
+ * @param maxlen        size_t, 一行最大的长度。若一行数据超过最大长度，则以'\0'截断
+ *
+ * @returns             真正读取到的字符数量
+ */
+ssize_t Rio_full_readline(Rio *rp, void *usrbuf, size_t maxlen) {
+    size_t totCnt = 0;
+    ssize_t readCnt;
+    char c, *bufp = (char *)usrbuf;
+
+    for(int i=0; i<maxlen; i++) {   //n代表已接收字符的数量
+        if((readCnt=Rio_read(rp, &c, 1)) == 1) {
+            ++totCnt;
+            *bufp = c;
+            ++bufp;
+            if(c == '\n')
+                break;
+        }
+        else if(readCnt == 0)        //socket 关闭
+            break;
+        else
             return -1;
     }
     *bufp = 0;
@@ -150,6 +182,7 @@ Rio* newRio(int fd, struct event* ev) {
     rio->readn = Rio_readn;
     rio->readline = Rio_readline;
     rio->writen = Rio_writen;
+    rio->full_readline = Rio_full_readline;
 
     return rio;
 }
