@@ -256,10 +256,10 @@ uint32_t do_get(request_message *req, Rio *rio, uint32_t *statue_code) {
         }
     } else {
         //分块传输
-        doChunkedFileDownLoadResponse(filepath, rio, req->rh);
+        res=doChunkedFileDownLoadResponse(filepath, rio, req->rh);
     }
 
-    return __OK__;
+    return res;
 }
 
 /**
