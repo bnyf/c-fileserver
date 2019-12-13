@@ -10,7 +10,7 @@
 
 
 //Common Tool Area
-const uint32_t CHUNKED_PART_SIZE = 1024;
+const uint32_t CHUNKED_PART_SIZE = 1024*128;
 
 const uint32_t RESPONSE_STATUS_LINE_STR_SIZE = 60;
 const uint32_t RESPONSE_HEADER_STR_SIZE = 150;
@@ -27,6 +27,9 @@ const char* NOT_FOUND_WORD = "Not Found";
 
 const uint32_t OK_CODE = 200;
 const char* OK_WORD = "OK";
+
+const uint32_t MULTI_CHOICES_CODE = 300;
+const char* MULTI_CHOICES_WORD = "Multiple Choices";
 
 const uint32_t INTERNAL_SERVER_ERROR_CODE = 500;
 const char* INTERNAL_SERVER_ERROR_WORD = "Internal Server Error";
@@ -114,6 +117,10 @@ const char* getStatusWord(uint32_t statusCode){
 
         return BAD_REQUEST_WORD;
     }
+    else if(statusCode == MULTI_CHOICES_CODE){
+
+        return MULTI_CHOICES_WORD;
+    }
     else{
 
         return "default";
@@ -137,14 +144,14 @@ void free_ResponseStatusLine(ResponseStatusLine* responseStatusLine){
 
 static void zero_ResponseHeader(ResponseHeader* responseHeader){
 
-    responseHeader->Content_Length = 0;
+    responseHeader->Content_Length = -1;
     responseHeader->Accept_Ranges = 0;
     responseHeader->Transfer_Encoding = 0;
     responseHeader->Content_Type = 0;
-
+    responseHeader->Connection = 0;
 }
 
-void init_ResponseHeader(ResponseHeader* responseHeader,const char* Content_Type,uint32_t Content_Length,const char* Accept_Ranges,const char* Transfer_Encoding,const char* Connection){
+void init_ResponseHeader(ResponseHeader* responseHeader,const char* Content_Type,int32_t Content_Length,const char* Accept_Ranges,const char* Transfer_Encoding,const char* Connection){
 
     zero_ResponseHeader(responseHeader);
     responseHeader->Content_Type = Content_Type;
@@ -155,7 +162,7 @@ void init_ResponseHeader(ResponseHeader* responseHeader,const char* Content_Type
 
 }
 
-ResponseHeader* new_ResponseHeader(const char* Content_Type,uint32_t Content_Length,const char* Accept_Ranges,const char* Connection){
+ResponseHeader* new_ResponseHeader(const char* Content_Type,int32_t Content_Length,const char* Accept_Ranges,const char* Connection){
 
     ResponseHeader* responseHeader = malloc(sizeof(ResponseHeader));
     zero_ResponseHeader(responseHeader);
@@ -402,6 +409,31 @@ void free_Response(Response* response){
 
 
 
+char* generateResponseByStatusCode(uint32_t statusCode,uint32_t* length){
 
+    ResponseStatusLine* responseStatusLine = new_ResponseStatusLine(HTTP_VERSION1_1,statusCode);
+    ResponseHeader* responseHeader;
+    if(statusCode == MULTI_CHOICES_CODE){
+
+        responseHeader = new_ResponseHeader(0,0,0,"close");
+    }
+    else if(statusCode == BAD_REQUEST_CODE || statusCode == INTERNAL_SERVER_ERROR_CODE){
+
+        responseHeader = new_ResponseHeader(0,0,0,"keep-alive");
+    }
+    else{
+        responseHeader = new_ResponseHeader(0,0,0,0);
+    }
+
+    Response* response = new_Response(responseStatusLine,responseHeader,0);
+
+
+    char* res = generateResponseStr(response,length);
+
+    free_Response(response);
+
+    return res;
+
+}
 
 

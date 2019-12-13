@@ -1,4 +1,5 @@
 #include "server.h"
+#include "response.h"
 
 int server_init() {
     int socket_desc;
@@ -16,7 +17,7 @@ int server_init() {
     //init server
     server.sin_family = AF_INET; //IPv4
     char local_ip[INET_ADDRSTRLEN] = {"127.0.0.1"};
-//    get_ip(local_ip);
+    get_ip(local_ip);
     printf("local ip: %s\n", local_ip);
     server.sin_addr.s_addr = inet_addr(local_ip);
     server.sin_port = htons(8080);
@@ -68,7 +69,15 @@ void socket_read_cb(int fd, short events, void *arg) {
     Rio *rio = (Rio *) arg;
 
     uint32_t statue_code;
-    if (read_http(rio, &statue_code) != 1) {
+    //根据错误状态码回送响应报文
+    uint32_t ret_status=read_http(rio, &statue_code);
+    if(ret_status!=__OK__){
+        uint32_t ret_length;
+        char * res=generateResponseByStatusCode(statue_code,&ret_length);
+        rio->writen(rio,res,ret_length);
+    }
+    //关闭连接
+    if (ret_status!= 1) {
         freeRio(rio);
     }
 }

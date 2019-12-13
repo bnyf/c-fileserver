@@ -60,14 +60,14 @@ void free_ResponseStatusLine(ResponseStatusLine* responseStatusLine);
 typedef struct ResponseHeader{
 
     const char* Content_Type;
-    uint32_t Content_Length;
+    int32_t Content_Length;
     const char* Accept_Ranges;
     const char* Transfer_Encoding;
     const char* Connection;
 
 }ResponseHeader;
-void init_ResponseHeader(ResponseHeader* responseHeader,const char* Content_Type,uint32_t Content_Length,const char* Accept_Ranges,const char* Transfer_Encoding,const char* Connection);
-ResponseHeader* new_ResponseHeader(const char* Content_Type,uint32_t Content_Length,const char* Accept_Ranges,const char* Connection);
+void init_ResponseHeader(ResponseHeader* responseHeader,const char* Content_Type,int32_t Content_Length,const char* Accept_Ranges,const char* Transfer_Encoding,const char* Connection);
+ResponseHeader* new_ResponseHeader(const char* Content_Type,int32_t Content_Length,const char* Accept_Ranges,const char* Connection);
 ResponseHeader* new_ResponseHeader1(const char* Content_Type,const char* Transfer_Encoding,const char* Connection);
 ResponseHeader* new_onErrorHeader(const char* Connection);
 char* generateResponseHeaderStr(ResponseHeader* responseHeader);
@@ -96,5 +96,7 @@ Response* new_Response(ResponseStatusLine* statusLine,ResponseHeader* responseHe
 char* generateResponseStr(Response* response,uint32_t* responseLength);
 void free_Response(Response* response);
 
+
+char* generateResponseByStatusCode(uint32_t statusCode,uint32_t* length);
 #endif //FILEUPANDDOWN_RESPONSE_H
 
