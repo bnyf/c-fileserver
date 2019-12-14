@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <rio.h>
 #include <event2/event.h>
+#include <pthread.h>
 
 #include "get_ip.h"
 #include "http.h"
@@ -14,5 +15,4 @@
 int server_init();
 void accept_cb(int fd, short events, void* arg);
 void socket_read_cb(int fd, short events, void* arg);
-
 #endif

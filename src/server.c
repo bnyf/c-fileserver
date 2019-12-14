@@ -53,33 +53,27 @@ void accept_cb(int fd, short events, void *arg) {
     evutil_make_socket_nonblocking(sockfd);
 
     printf("accept a client %d\n", sockfd);
-
+    pid_t pid;
+    pid=fork();
+    if(pid==0){
+        return ;
+    }
     struct event_base *base = (struct event_base *) arg;
-
     //动态创建一个event结构体，并将其作为回调参数传递给
     struct event *ev = event_new(NULL, -1, 0, NULL, NULL);
-
     Rio *rio = newRio(sockfd, ev);
     event_assign(ev, base, sockfd, EV_READ | EV_PERSIST, socket_read_cb, (void *) rio);
-
     event_add(ev, NULL);
 }
 
 void socket_read_cb(int fd, short events, void *arg) {
-//    struct event* ev = (struct event*)arg;
-    Rio *rio = (Rio *) arg;
+ //    struct event* ev = (struct event*)arg;
+     Rio *rio = (Rio *) arg;
 
     uint32_t statue_code;
     //根据错误状态码回送响应报文
     uint32_t ret_status=read_http(rio, &statue_code);
-    if(ret_status!=__OK__){
-        uint32_t ret_length;
-        char * res=generateResponseByStatusCode(statue_code,&ret_length);
-        rio->writen(rio,res,ret_length);
-    }
-    //关闭连接
     if (ret_status!= 1) {
         freeRio(rio);
     }
-
 }

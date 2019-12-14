@@ -9,11 +9,21 @@
 #include "server.h"
 #include "rio.h"
 
+void handler(int num) {
+    //我接受到了SIGCHLD的信号啦
+    int status;
+    int pid = waitpid(-1, &status, WNOHANG);
+    if (WIFEXITED(status)) {
+        printf("The child %d exit with code %d\n", pid, WEXITSTATUS(status));
+    }
+}
+
 int main(int argc, char* argv[]) {
 
 	int listener;
 
     signal(SIGPIPE, SIG_IGN);
+    signal(SIGCHLD, handler);
 
     listener = server_init();
 
