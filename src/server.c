@@ -62,18 +62,25 @@ void accept_cb(int fd, short events, void *arg) {
     //动态创建一个event结构体，并将其作为回调参数传递给
     struct event *ev = event_new(NULL, -1, 0, NULL, NULL);
     Rio *rio = newRio(sockfd, ev);
-    event_assign(ev, base, sockfd, EV_READ | EV_PERSIST, socket_read_cb, (void *) rio);
+    event_assign(ev, base, sockfd, EV_READ | EV_PERSIST | EV_ET, socket_read_cb, (void *) rio);
+
     event_add(ev, NULL);
 }
 
-void socket_read_cb(int fd, short events, void *arg) {
- //    struct event* ev = (struct event*)arg;
-     Rio *rio = (Rio *) arg;
+void exec_http(void *arg){
+    Rio *rio = (Rio *) arg;
 
     uint32_t statue_code;
     //根据错误状态码回送响应报文
     uint32_t ret_status=read_http(rio, &statue_code);
+
     if (ret_status!= 1) {
         freeRio(rio);
     }
+}
+
+void socket_read_cb(int fd, short events, void *arg) {
+
+    pthread_t tid;
+    tid = pthread_create(&tid, NULL, exec_http, arg);
 }

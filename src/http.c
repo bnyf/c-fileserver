@@ -89,7 +89,7 @@ uint32_t read_http(Rio *rio, uint32_t *statue_code) {
     int n = 0;
     //第一次读取请求行
     n = rio->readline(rio, data, __MAXLENGTH__);
-    printf("readline:%d %s\n", n, data);
+    printf("%s\n", data);
 
     //处理请求行
     char *req_line[3] = {0};
@@ -114,7 +114,8 @@ uint32_t read_http(Rio *rio, uint32_t *statue_code) {
     if (!*statue_code)
         *statue_code = 200;
 
-    if (!strcmp(req.rh->connection, "closed")) {
+    if (!strcmp(req.rh->connection, "close")) {
+        printf("close\n\n");
         if (res == __OK__)
             res = __CLOSED__;
     }
@@ -180,7 +181,7 @@ uint32_t execReq(request_message *req, Rio *rio, uint32_t *statue_code) {
     while (true) {
         uint32_t count = 0;
         count = rio->readline(rio, head, __MAXLENGTH__);
-        printf("request:%d %s\n", count, head);
+        // printf("request:%d %s\n", count, head);
 
         if (count == 0) { break; }
         //解析头部
@@ -239,7 +240,7 @@ uint32_t do_get(request_message *req, Rio *rio, uint32_t *statue_code) {
     url_info = url_parse(req->rl->url);
     //    url_data_inspect(url_info);
     char *filepath = url_info->pathname;
-    printf("filepath:%s\n", filepath);
+    printf("filepath:%s\n\n", filepath);
     /*将文件解析地址传入处理函数,需要配合响应函数写*/
     uint32_t res;
 
@@ -288,7 +289,7 @@ uint32_t do_post(request_message *req, Rio *rio, uint32_t *statue_code) {
     url_info = url_parse(req->rl->url);
     //url_data_inspect(url_info);
     char *filepath = url_info->pathname;
-    printf("filepath:%s\n", filepath);
+    printf("filepath:%s\n\n", filepath);
 
 
     if (!__ISUOLODECHUNKTRANSPORT__) {
