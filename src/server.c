@@ -65,7 +65,7 @@ void accept_cb(int fd, short events, void *arg) {
     event_add(ev, NULL);
 }
 
-void solve(void *arg){
+void exec_http(void *arg){
     Rio *rio = (Rio *) arg;
 
     uint32_t statue_code;
@@ -80,5 +80,5 @@ void solve(void *arg){
 void socket_read_cb(int fd, short events, void *arg) {
 
     pthread_t tid;
-    tid = pthread_create(&tid, NULL, solve, arg);
+    tid = pthread_create(&tid, NULL, exec_http, arg);
 }
