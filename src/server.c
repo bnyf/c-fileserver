@@ -71,12 +71,6 @@ void solve(void *arg){
     uint32_t statue_code;
     //根据错误状态码回送响应报文
     uint32_t ret_status=read_http(rio, &statue_code);
-//    if(ret_status!=__OK__){
-//        uint32_t ret_length;
-//        char * res=generateResponseByStatusCode(statue_code,&ret_length);
-//        rio->writen(rio,res,ret_length);
-//    }
-////    关闭连接
 
     if (ret_status!= 1) {
         freeRio(rio);
