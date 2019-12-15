@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <rio.h>
 #include <event2/event.h>
+#include <pthread.h>
 
 #include "get_ip.h"
 #include "http.h"

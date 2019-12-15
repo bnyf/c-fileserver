@@ -60,26 +60,31 @@ void accept_cb(int fd, short events, void *arg) {
     struct event *ev = event_new(NULL, -1, 0, NULL, NULL);
 
     Rio *rio = newRio(sockfd, ev);
-    event_assign(ev, base, sockfd, EV_READ | EV_PERSIST, socket_read_cb, (void *) rio);
+    event_assign(ev, base, sockfd, EV_READ | EV_PERSIST | EV_ET, socket_read_cb, (void *) rio);
 
     event_add(ev, NULL);
 }
 
-void socket_read_cb(int fd, short events, void *arg) {
-//    struct event* ev = (struct event*)arg;
+void solve(void *arg){
     Rio *rio = (Rio *) arg;
 
     uint32_t statue_code;
     //根据错误状态码回送响应报文
     uint32_t ret_status=read_http(rio, &statue_code);
-    if(ret_status!=__OK__){
-        uint32_t ret_length;
-        char * res=generateResponseByStatusCode(statue_code,&ret_length);
-        rio->writen(rio,res,ret_length);
-    }
-    //关闭连接
+//    if(ret_status!=__OK__){
+//        uint32_t ret_length;
+//        char * res=generateResponseByStatusCode(statue_code,&ret_length);
+//        rio->writen(rio,res,ret_length);
+//    }
+////    关闭连接
+
     if (ret_status!= 1) {
         freeRio(rio);
     }
+}
 
+void socket_read_cb(int fd, short events, void *arg) {
+
+    pthread_t tid;
+    tid = pthread_create(&tid, NULL, solve, arg);
 }
